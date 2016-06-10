@@ -2,8 +2,8 @@ name:            aivika-lattice
 version:         0.1
 synopsis:        Nested discrete event simulation module for the Aivika library using lattice
 description:
-    This package extends the aivika-transformers [1] library with facilities for running
-    nested discrete event simulations within lattice nodes.
+    This experimental package extends the aivika-transformers [1] library with facilities for 
+    running nested discrete event simulations within lattice nodes.
     .
     \[1] <http://hackage.haskell.org/package/aivika-transformers>
     .
