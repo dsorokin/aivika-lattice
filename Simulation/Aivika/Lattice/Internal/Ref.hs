@@ -18,8 +18,11 @@ module Simulation.Aivika.Lattice.Internal.Ref
         newRef,
         newRef0,
         readRef,
+        readRef0,
         writeRef,
-        modifyRef) where
+        writeRef0,
+        modifyRef,
+        modifyRef0) where
 
 -- import Debug.Trace
 
@@ -77,8 +80,11 @@ newRef0 a =
      
 -- | Read the value of a reference.
 readRef :: Ref a -> Event LIO a
-readRef r =
-  Event $ \p ->
+readRef = Event . const . readRef0
+     
+-- | Read the value of a reference.
+readRef0 :: Ref a -> LIO a
+readRef0 r =
   LIO $ \ps ->
   do m <- readIORef (refMap r)
      let loop ps =
@@ -92,8 +98,11 @@ readRef r =
 
 -- | Write a new value into the reference.
 writeRef :: Ref a -> a -> Event LIO ()
-writeRef r a =
-  Event $ \p ->
+writeRef r a = Event $ const $ writeRef0 r a 
+
+-- | Write a new value into the reference.
+writeRef0 :: Ref a -> a -> LIO ()
+writeRef0 r a =
   LIO $ \ps ->
   do m <- readIORef (refMap r)
      let !i = lioMapIndex ps
@@ -105,8 +114,11 @@ writeRef r a =
 
 -- | Mutate the contents of the reference.
 modifyRef :: Ref a -> (a -> a) -> Event LIO ()
-modifyRef r f =
-  Event $ \p ->
+modifyRef r f = Event $ const $ modifyRef0 r f
+
+-- | Mutate the contents of the reference.
+modifyRef0 :: Ref a -> (a -> a) -> LIO ()
+modifyRef0 r f =
   LIO $ \ps ->
   do m <- readIORef (refMap r)
      let !i = lioMapIndex ps
@@ -116,5 +128,5 @@ modifyRef r f =
             let b = f a
             b `seq` writeIORef ra b
        Nothing ->
-         do a <- invokeLIO ps $ invokeEvent p $ readRef r
-            invokeLIO ps $ invokeEvent p $ writeRef r (f a)
+         do a <- invokeLIO ps $ readRef0 r
+            invokeLIO ps $ writeRef0 r (f a)
