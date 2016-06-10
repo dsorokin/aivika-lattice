@@ -69,24 +69,29 @@ instance EventQueueing LIO where
 processPendingEventsCore :: Bool -> Dynamics LIO ()
 processPendingEventsCore includingCurrentEvents = Dynamics r where
   r p =
+    LIO $ \ps ->
     do let q = runEventQueue $ pointRun p
            f = queueBusy q
-       f' <- liftIO $ readIORef f
+       f' <- readIORef f
        if f'
          then error $
               "Detected an event loop, which may indicate to " ++
               "a logical error in the model: processPendingEventsCore"
-         else do liftIO $ writeIORef f True
-                 call q p p
-                 liftIO $ writeIORef f False
-  call q p p0 =
+         else do writeIORef f True
+                 call q p p ps
+                 writeIORef f False
+  call q p p0 ps0 =
     do let pq = queuePQ q
            r  = pointRun p
-       f <- invokeEvent p0 $ fmap PQ.queueNull $ R.readRef pq
+       f <- invokeLIO ps0 $
+            invokeEvent p0 $
+            fmap PQ.queueNull $ R.readRef pq
        unless f $
-         do (t2, c2) <- invokeEvent p0 $ fmap PQ.queueFront $ R.readRef pq
+         do (t2, c2) <- invokeLIO ps0 $
+                        invokeEvent p0 $
+                        fmap PQ.queueFront $ R.readRef pq
             let t = queueTime q
-            t' <- liftIO $ readIORef t
+            t' <- readIORef t
             when (t2 < t') $ 
               error "The time value is too small: processPendingEventsCore"
             when ((t2 < pointTime p) ||
@@ -98,10 +103,16 @@ processPendingEventsCore includingCurrentEvents = Dynamics r where
                      p2 = p { pointTime = t2,
                               pointIteration = n2,
                               pointPhase = -1 }
-                 liftIO $ writeIORef t t2
-                 invokeEvent p2 $ R.modifyRef pq PQ.dequeue
-                 c2 p2
-                 call q p p2
+                 ps2 <- invokeLIO ps0 $
+                        invokeEvent p0
+                        bestSuitedLIOParams
+                 writeIORef t t2
+                 invokeLIO ps2 $
+                   invokeEvent p2 $
+                   R.modifyRef pq PQ.dequeue
+                 invokeLIO ps2 $
+                   c2 p2
+                 call q p p2 ps2
 
 -- | Process the pending events synchronously, i.e. without past.
 processPendingEvents :: Bool -> Dynamics LIO ()
