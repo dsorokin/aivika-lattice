@@ -22,7 +22,10 @@ module Simulation.Aivika.Lattice.Internal.Ref
         writeRef,
         writeRef0,
         modifyRef,
-        modifyRef0) where
+        modifyRef0,
+        topRefDefined0,
+        defineTopRef0,
+        defineTopRef0_) where
 
 -- import Debug.Trace
 
@@ -130,3 +133,36 @@ modifyRef0 r f =
        Nothing ->
          do a <- invokeLIO ps $ readRef0 r
             invokeLIO ps $ writeRef0 r (f a)
+
+-- | Whether the top reference value is defined.
+topRefDefined0 :: Ref a -> LIO Bool
+topRefDefined0 r =
+  LIO $ \ps ->
+  do m <- readIORef (refMap r)
+     let !i = lioMapIndex ps
+     case M.lookup i m of
+       Just ra -> return True
+       Nothing -> return False
+
+-- | Define the top reference value.
+defineTopRef0 :: Ref a -> LIO a
+defineTopRef0 r =
+  LIO $ \ps ->
+  do m <- readIORef (refMap r)
+     let !i = lioMapIndex ps
+     case M.lookup i m of
+       Just ra -> readIORef ra
+       Nothing ->
+         case parentLIOParams ps of
+           Nothing  -> error "Cannot find parent: defineTopRef0"
+           Just ps' ->
+             do a  <- invokeLIO ps' $ defineTopRef0 r
+                ra <- a `seq` newIORef a
+                modifyIORef (refMap r) $ M.insert i ra
+                return a
+
+-- | Ensure that the top reference value is defined.
+defineTopRef0_ :: Ref a -> LIO ()
+defineTopRef0_ r =
+  do a <- defineTopRef0 r
+     return ()
