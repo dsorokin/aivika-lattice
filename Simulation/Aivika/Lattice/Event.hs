@@ -230,7 +230,7 @@ latticeEvent m =
 --
 -- The event queue state is memoized in the nodes of the lattice. Each node
 -- is defined by a pair of @latticeTimeIndex@ and @latticeMemberIndex@. It means
--- that when calling 'nextEvents' next time, we can return the results immediately
+-- that when calling 'nextEvents' next time, we can return one of the results immediately
 -- without traversing the event queue if the corresponding node was traversed before.
 --
 nextEvents :: Event LIO a -> Event LIO (a, a)
