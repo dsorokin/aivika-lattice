@@ -53,6 +53,23 @@ model =
      runProcessInStartTime machine
      runProcessInStartTime machine
 
+     t2 <- liftParameter stoptime
+     
+     let forecastUpTimeProp :: Event LIO Double
+         forecastUpTimeProp =
+           do t <- liftDynamics time
+              if t >= t2
+                then do x <- readRef totalUpTime
+                        return $ x / (2 * t)
+                else do (x1, x2) <- nextEvents forecastUpTimeProp
+                        let x = (x1 + x2) / 2
+                        x `seq` return x
+
+     v <- runEventInStartTime forecastUpTimeProp
+
+     let upTimePropForecasted :: Event LIO Double
+         upTimePropForecasted = return v
+     
      let upTimeProp =
            do x <- readRef totalUpTime
               t <- liftDynamics time
@@ -63,7 +80,12 @@ model =
        [resultSource
         "upTimeProp"
         "The long-run proportion of up time (~ 0.66)"
-        upTimeProp]
+        upTimeProp,
+        --
+        resultSource
+        "upTimePropForecasted"
+        "The forecasted long-run proption of up time"
+        upTimePropForecasted]
 
 main :: IO ()
 main =
