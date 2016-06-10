@@ -10,7 +10,7 @@
 -- Tested with: GHC 7.10.3
 --
 -- The module defines an event queue, where 'LIO' is an instance of 'EventQueueing'.
--- Also it defines basic functions for nested computations within lattice nodes.
+-- Also it defines basic functions for running nested computations within lattice nodes.
 --
 module Simulation.Aivika.Lattice.Event
        (nextEvents,
