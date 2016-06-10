@@ -144,7 +144,7 @@ nextLIOParams =
       k'  = min i' k
   in return (ps1, ps2)
 
--- | Return the lattice time index starting from 0. It is always less than 'latticeSize'.
+-- | Return the lattice time index starting from 0. It corresponds to the integration time point.
 latticeTimeIndex :: LIO Int
 latticeTimeIndex = LIO $ return . lioTimeIndex
 
