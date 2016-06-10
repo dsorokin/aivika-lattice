@@ -30,7 +30,7 @@ specs = Specs { spcStartTime = 0.0,
                 spcMethod = RungeKutta4,
                 spcGeneratorType = SimpleGenerator }
         
-model :: Simulation LIO (Results LIO)
+model :: Simulation LIO Double
 model =
   do totalUpTime <- newRef 0.0
      
@@ -54,6 +54,53 @@ model =
      runProcessInStartTime machine
 
      t2 <- liftParameter stoptime
+
+     let showLatticeNode :: String -> Event LIO ()
+         showLatticeNode action =
+           do t <- liftDynamics time
+              i <- liftComp latticeTimeIndex
+              k <- liftComp latticeMemberIndex
+              liftIO $
+                do putStr action
+                   putStr $ ": t = " ++ show t
+                   putStr $ ", time index = " ++ show i
+                   putStr $ ", member index = " ++ show k
+                   putStrLn ""
+                   
+     let forecast :: (a -> a -> Event LIO a) -> Event LIO a -> Simulation LIO (Event LIO a)
+         forecast f m =
+           do r <- newRef Nothing
+              let loop =
+                    do showLatticeNode "get"
+                       b <- readRef r
+                       case b of
+                         Just a  ->
+                           do showLatticeNode "computed"
+                              return a
+                         Nothing ->
+                           do t  <- liftDynamics time
+                              t2 <- liftParameter stoptime
+                              if t >= t2
+                                then do showLatticeNode "leaf"
+                                        a <- m
+                                        a `seq` writeRef r (Just a)
+                                        return a
+                                else do showLatticeNode "reduce"
+                                        (a1, a2) <- nextEvents loop
+                                        a <- f a1 a2
+                                        a `seq` writeRef r (Just a)
+                                        return a
+              return loop
+
+     let accum =
+           do x <- readRef totalUpTime
+              t <- liftDynamics time
+              return $ x / (2 * t)
+
+     let reduce x1 x2 =
+           do let a = (x1 + x2) / 2
+              showLatticeNode $ "result (" ++ show a ++ ")" 
+              a `seq` return a
      
      let forecastUpTimeProp :: Event LIO Double
          forecastUpTimeProp =
@@ -65,31 +112,17 @@ model =
                         let x = (x1 + x2) / 2
                         x `seq` return x
 
-     v <- runEventInStartTime forecastUpTimeProp
+     -- runEventInStartTime
+     --   forecastUpTimeProp
 
-     let upTimePropForecasted :: Event LIO Double
-         upTimePropForecasted = return v
-     
-     let upTimeProp =
-           do x <- readRef totalUpTime
-              t <- liftDynamics time
-              return $ x / (2 * t)
+     r <- forecast reduce accum
 
-     return $
-       results
-       [resultSource
-        "upTimeProp"
-        "The long-run proportion of up time (~ 0.66)"
-        upTimeProp,
-        --
-        resultSource
-        "upTimePropForecasted"
-        "The forecasted long-run proption of up time"
-        upTimePropForecasted]
+     runEventInStartTime $
+       do showLatticeNode "launch"
+          r
 
 main :: IO ()
 main =
-  runLIO $
-  printSimulationResultsInStopTime
-  printResultSourceInEnglish
-  model specs
+  do a <- runLIO $
+          runSimulation model specs
+     print a

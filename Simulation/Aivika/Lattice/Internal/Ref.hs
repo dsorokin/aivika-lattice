@@ -96,7 +96,7 @@ readRef0 r =
              Nothing ->
                case parentLIOParams ps of
                  Just ps' -> loop ps'
-                 Nothing  -> error "Cannot find branch: readRef"
+                 Nothing  -> error "Cannot find lattice node: readRef0"
      loop ps
 
 -- | Write a new value into the reference.

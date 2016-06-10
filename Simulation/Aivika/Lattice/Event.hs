@@ -58,11 +58,8 @@ instance EventQueueing LIO where
 
   runEventWith processing (Event e) =
     Dynamics $ \p ->
-    LIO $ \ps0 ->
-    do ps <- invokeLIO ps0 $
-             invokeEvent p
-             bestSuitedLIOParams
-       invokeLIO ps $
+    LIO $ \ps ->
+    do invokeLIO ps $
          invokeDynamics p $
          processEvents processing
        invokeLIO ps $
@@ -121,20 +118,15 @@ processPendingEventsUnsafe includingCurrentEvents = Dynamics r where
                      p2 = p { pointTime = t2,
                               pointIteration = n2,
                               pointPhase = -1 }
-                 ps2 <- invokeLIO ps $
-                        invokeEvent p2
-                        bestSuitedLIOParams
-                 if ps == ps2
-                   then do invokeLIO ps $
-                             R.writeRef0 t t2
-                           invokeLIO ps $
-                             R.defineTopRef0_ pq
-                           invokeLIO ps $
-                             R.modifyRef0 pq PQ.dequeue
-                           invokeLIO ps $
-                             c2 p2
-                           call q p ps
-                   else call q p ps2
+                 invokeLIO ps $
+                   R.writeRef0 t t2
+                 invokeLIO ps $
+                   R.defineTopRef0_ pq
+                 invokeLIO ps $
+                   R.modifyRef0 pq PQ.dequeue
+                 invokeLIO ps $
+                   c2 p2
+                 call q p ps
 
 -- | Process the pending events synchronously, i.e. without past.
 processPendingEvents :: Bool -> Dynamics LIO ()
@@ -182,9 +174,9 @@ initEventQueue :: Event LIO ()
 initEventQueue =
   Event $ \p ->
   LIO $ \ps ->
-  do let q = runEventQueue $ pointRun p
+  do let pq = queuePQ $ runEventQueue $ pointRun p
      f <- invokeLIO ps $
-          R.topRefDefined0 (queuePQ q)
+          R.topRefDefined0 pq
      unless f $
        do case parentLIOParams ps of
             Nothing  -> error "The root must be initialized: initEventQueue"
