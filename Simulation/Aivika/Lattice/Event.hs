@@ -125,7 +125,7 @@ processPendingEventsUnsafe includingCurrentEvents = Dynamics r where
                    R.modifyRef0 pq PQ.dequeue
                  invokeLIO ps2 $
                    c2 p2
-                 call q p2 ps2
+                 call q p ps2
 
 -- | Process the pending events synchronously, i.e. without past.
 processPendingEvents :: Bool -> Dynamics LIO ()
