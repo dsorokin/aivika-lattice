@@ -22,8 +22,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         parentLIOParams,
         bestSuitedLIOParams,
         latticeTimeIndex,
-        latticeMemberIndex,
-        latticeSize) where
+        latticeMemberIndex) where
 
 import Data.IORef
 import Data.Maybe
@@ -46,10 +45,8 @@ newtype LIO a = LIO { unLIO :: LIOParams -> IO a
 data LIOParams =
   LIOParams { lioTimeIndex :: !Int,
               -- ^ The time index.
-              lioMemberIndex :: !Int,
+              lioMemberIndex :: !Int
               -- ^ The member index.
-              lioSize :: !Int
-              -- ^ The lattice size.
             } deriving (Eq, Ord, Show)
 
 instance Monad LIO where
@@ -102,15 +99,15 @@ invokeLIO :: LIOParams -> LIO a -> IO a
 {-# INLINE invokeLIO #-}
 invokeLIO ps (LIO m) = m ps
 
--- | Run the 'LIO' computation by the specified lattice size.
-runLIO :: LIO a -> Int -> IO a
-runLIO m n = unLIO m (rootLIOParams n)
+-- | Run the 'LIO' computation using the integration times points as lattice nodes.
+runLIO :: LIO a -> IO a
+runLIO m = unLIO m rootLIOParams
 
 -- | Return the parameters of the computation.
 lioParams :: LIO LIOParams
 lioParams = LIO return
 
--- | Return next branches.
+-- | Return parameters for the next nodes.
 nextLIOParams :: LIOParams -> (LIOParams, LIOParams)
 nextLIOParams ps = (ps1, ps2)
   where ps1 = ps { lioTimeIndex = 1 + i }
@@ -118,11 +115,10 @@ nextLIOParams ps = (ps1, ps2)
         i   = lioTimeIndex ps
         k   = lioMemberIndex ps
 
--- | Return a root branch by the specified lattice size.
-rootLIOParams :: Int -> LIOParams
-rootLIOParams n = LIOParams { lioTimeIndex = 0,
-                              lioMemberIndex = 0,
-                              lioSize = n }
+-- | Return the root node parameters.
+rootLIOParams :: LIOParams
+rootLIOParams = LIOParams { lioTimeIndex = 0,
+                            lioMemberIndex = 0 }
 
 -- | Return the parent parameters.
 parentLIOParams :: LIOParams -> Maybe LIOParams
@@ -138,9 +134,8 @@ bestSuitedLIOParams =
   Event $ \p ->
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
-      n  = lioSize ps
       i  = lioTimeIndex ps
-      i' = round $ (spcStopTime sc - spcStartTime sc) / (fromInteger $ toInteger n)
+      i' = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
   in return $ ps { lioTimeIndex = i' }
 
 -- | Return the lattice time index starting from 0. It is always less than 'latticeSize'.
@@ -150,8 +145,3 @@ latticeTimeIndex = LIO $ return . lioTimeIndex
 -- | Return the lattice member index starting from 0. It is always less than or equaled to 'latticeTimeIndex'.
 latticeMemberIndex :: LIO Int
 latticeMemberIndex = LIO $ return . lioMemberIndex
-
--- | Return the lattice size.
-latticeSize :: LIO Int
-latticeSize = LIO $ return . lioSize
-

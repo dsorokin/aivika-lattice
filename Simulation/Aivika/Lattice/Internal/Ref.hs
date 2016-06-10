@@ -45,7 +45,9 @@ instance Eq (Ref a) where
 
 -- | Return the map index.
 lioMapIndex :: LIOParams -> Int
-lioMapIndex ps = (lioTimeIndex ps) * (lioSize ps) + (lioMemberIndex ps)
+lioMapIndex ps = ((i * (i + 1)) `div` 2) + k
+  where i = lioTimeIndex ps
+        k = lioMemberIndex ps
 
 -- | Create an empty reference.
 newEmptyRef :: Simulation LIO (Ref a)
