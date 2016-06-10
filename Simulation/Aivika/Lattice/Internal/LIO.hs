@@ -22,7 +22,8 @@ module Simulation.Aivika.Lattice.Internal.LIO
         parentLIOParams,
         bestSuitedLIOParams,
         latticeTimeIndex,
-        latticeMemberIndex) where
+        latticeMemberIndex,
+        latticeStartTime) where
 
 import Data.IORef
 import Data.Maybe
@@ -127,7 +128,7 @@ bestSuitedLIOParams =
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
       i  = lioTimeIndex ps
-      i' = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
+      i' = round $ (pointTime p - spcStartTime sc) / spcDT sc
   in return $ ps { lioTimeIndex = max i i' }
 
 -- | Return parameters for the next nodes.
@@ -138,7 +139,7 @@ nextLIOParams =
   let sc  = runSpecs (pointRun p)
       ps1 = ps { lioTimeIndex = 1 + i', lioMemberIndex = k' }
       ps2 = ps { lioTimeIndex = 1 + i', lioMemberIndex = 1 + k' }
-      i'  = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
+      i'  = round $ (pointTime p - spcStartTime sc) / spcDT sc
       k   = lioMemberIndex ps
       k'  = min i' k
   in return (ps1, ps2)
@@ -150,3 +151,13 @@ latticeTimeIndex = LIO $ return . lioTimeIndex
 -- | Return the lattice member index starting from 0. It is always less than or equaled to 'latticeTimeIndex'.
 latticeMemberIndex :: LIO Int
 latticeMemberIndex = LIO $ return . lioMemberIndex
+
+-- | Return the start time for the current lattice node.
+latticeStartTime :: Parameter LIO Double
+latticeStartTime =
+  Parameter $ \r ->
+  LIO $ \ps ->
+  let sc = runSpecs r
+      i  = lioTimeIndex ps
+      t  = spcStartTime sc + (fromInteger $ toInteger i) * (spcDT sc)
+  in return t
