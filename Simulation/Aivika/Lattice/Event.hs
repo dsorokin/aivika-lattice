@@ -10,9 +10,11 @@
 -- Tested with: GHC 7.10.3
 --
 -- The module defines an event queue, where 'LIO' is an instance of 'EventQueueing'.
--- Also it defines basic functions for branching computations.
+-- Also it defines basic functions for nested computations within lattice nodes.
 --
-module Simulation.Aivika.Lattice.Event () where
+module Simulation.Aivika.Lattice.Event
+       (nextEvents,
+        nextEvents_) where
 
 import Data.IORef
 
@@ -78,22 +80,29 @@ processPendingEventsCore includingCurrentEvents = Dynamics r where
               "Detected an event loop, which may indicate to " ++
               "a logical error in the model: processPendingEventsCore"
          else do writeIORef f True
-                 call q p p ps
+                 invokeLIO ps $
+                   invokeDynamics p $
+                   processPendingEventsUnsafe includingCurrentEvents
                  writeIORef f False
-  call q p p0 ps0 =
+
+-- | Process the pending events in unsafe manner.
+processPendingEventsUnsafe :: Bool -> Dynamics LIO ()
+processPendingEventsUnsafe includingCurrentEvents = Dynamics r where
+  r p =
+    LIO $ \ps ->
+    let q = runEventQueue $ pointRun p
+    in call q p ps
+  call q p ps =
     do let pq = queuePQ q
            r  = pointRun p
-       f <- invokeLIO ps0 $
-            invokeEvent p0 $
-            fmap PQ.queueNull $ R.readRef pq
+       f <- invokeLIO ps $
+            fmap PQ.queueNull $ R.readRef0 pq
        unless f $
-         do (t2, c2) <- invokeLIO ps0 $
-                        invokeEvent p0 $
-                        fmap PQ.queueFront $ R.readRef pq
+         do (t2, c2) <- invokeLIO ps $
+                        fmap PQ.queueFront $ R.readRef0 pq
             let t = queueTime q
-            t' <- invokeLIO ps0 $
-                  invokeEvent p0 $
-                  R.readRef t
+            t' <- invokeLIO ps $
+                  R.readRef0 t
             when (t2 < t') $ 
               error "The time value is too small: processPendingEventsCore"
             when ((t2 < pointTime p) ||
@@ -105,18 +114,18 @@ processPendingEventsCore includingCurrentEvents = Dynamics r where
                      p2 = p { pointTime = t2,
                               pointIteration = n2,
                               pointPhase = -1 }
-                 ps2 <- invokeLIO ps0 $
+                 ps2 <- invokeLIO ps $
                         invokeEvent p2
                         bestSuitedLIOParams
                  invokeLIO ps2 $
-                   invokeEvent p2 $
-                   R.writeRef t t2
+                   R.writeRef0 t t2
                  invokeLIO ps2 $
-                   invokeEvent p2 $
-                   R.modifyRef pq PQ.dequeue
+                   R.defineTopRef0_ pq
+                 invokeLIO ps2 $
+                   R.modifyRef0 pq PQ.dequeue
                  invokeLIO ps2 $
                    c2 p2
-                 call q p p2 ps2
+                 call q p2 ps2
 
 -- | Process the pending events synchronously, i.e. without past.
 processPendingEvents :: Bool -> Dynamics LIO ()
@@ -158,3 +167,95 @@ processEvents CurrentEvents = processEventsIncludingCurrent
 processEvents EarlierEvents = processEventsIncludingEarlier
 processEvents CurrentEventsOrFromPast = processEventsIncludingCurrentCore
 processEvents EarlierEventsOrFromPast = processEventsIncludingEarlierCore
+
+-- | Initialize the event queue in the current lattice node if required.
+initEventQueue :: Event LIO ()
+initEventQueue =
+  Event $ \p ->
+  LIO $ \ps ->
+  do let q = runEventQueue $ pointRun p
+     f <- invokeLIO ps $
+          R.topRefDefined0 (queuePQ q)
+     unless f $
+       do case parentLIOParams ps of
+            Nothing  -> error "The root must be initialized: initEventQueue"
+            Just ps' ->
+              do p' <- invokeLIO ps' $
+                       invokeEvent p
+                       latticeStartPoint
+                 invokeLIO ps' $
+                   invokeEvent p'
+                   initEventQueue
+          invokeLIO ps $
+            invokeDynamics p $
+            processPendingEventsUnsafe True
+
+-- | Return the start point in the corresponding lattice node.
+latticeStartPoint :: Event LIO (Point LIO)
+latticeStartPoint =
+  Event $ \p ->
+  do let r = pointRun p
+     t <- invokeParameter r latticeStartTime
+     let sc = pointSpecs p
+         t0 = spcStartTime sc
+         dt = spcDT sc
+         n  = fromIntegral $ floor ((t - t0) / dt)
+     return $ p { pointTime = t,
+                  pointIteration = n,
+                  pointPhase = -1 }
+
+-- | Return the computation value in the corresponding lattice node.
+latticeEvent :: Event LIO a -> Event LIO a
+latticeEvent m =
+  Event $ \p ->
+  LIO $ \ps ->
+  do p' <- invokeLIO ps $
+           invokeEvent p $
+           latticeStartPoint
+     invokeLIO ps $
+       invokeEvent p' $
+       initEventQueue
+     invokeLIO ps $
+       invokeEvent p' m
+
+-- | Run the specified nested computation in the next nodes of the lattice using
+-- the integration time points for calculating the 'latticeTimeIndex',
+-- which will be increased by one. The first result will correspond to
+-- the current 'latticeMemberIndex'. The second result will corresponded to
+-- the 'latticeMemberIndex' increased by one.
+--
+-- The current computation within the current lattice node remains intact.
+-- Nevertheless, this function has the following important possibly unexpected
+-- side effect, which is an essence of the lattice approach at the same time.
+--
+-- If the modeling time increases, then we always recompute the 'latticeTimeIndex'
+-- so that it will correspond to the current time, where 'latticeMemberIndex'
+-- remains the same. It means that the time points of the same simulation can correspond to
+-- different lattice nodes. The width of the node is defined by parameter 'spcDT'.
+--
+-- Therefore, after calling the 'nextEvents' function, we initialize the next
+-- two lattice nodes in advance. It may lead to such a situation when the simulation
+-- can return immediately right after the time increases, because we pass to the next
+-- lattice node, which was already initialized and computed earlier.
+--
+nextEvents :: Event LIO a -> Event LIO (a, a)
+nextEvents m =
+  Event $ \p ->
+  LIO $ \ps ->
+  do (ps1, ps2) <- invokeLIO ps $
+                   invokeEvent p
+                   nextLIOParams
+     a1 <- invokeLIO ps1 $
+           invokeEvent p $
+           latticeEvent m
+     a2 <- invokeLIO ps2 $
+           invokeEvent p $
+           latticeEvent m
+     return (a1, a2)
+
+-- | Like 'nextEvents_' but called exclusively for performing side effects.
+nextEvents_ :: Event LIO a -> Event LIO ()
+nextEvents_ m =
+  do (a1, a2) <- nextEvents m
+     return ()
+  
