@@ -19,6 +19,7 @@ build-type:      Simple
 tested-with:     GHC == 7.10.3
 
 extra-source-files:  CHANGELOG.md
+                     tests/MachRep1.hs
 
 library
 
