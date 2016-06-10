@@ -10,7 +10,7 @@ meanRepairTime = 0.5
 
 specs = Specs { spcStartTime = 0.0,
                 spcStopTime = 1000.0,
-                spcDT = 500.0,
+                spcDT = 400.0,
                 spcMethod = RungeKutta4,
                 spcGeneratorType = SimpleGenerator }
         
