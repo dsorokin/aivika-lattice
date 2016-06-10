@@ -58,8 +58,15 @@ instance EventQueueing LIO where
 
   runEventWith processing (Event e) =
     Dynamics $ \p ->
-    do invokeDynamics p $ processEvents processing
-       e p
+    LIO $ \ps0 ->
+    do ps <- invokeLIO ps0 $
+             invokeEvent p
+             bestSuitedLIOParams
+       invokeLIO ps $
+         invokeDynamics p $
+         processEvents processing
+       invokeLIO ps $
+         e p
 
   eventQueueCount =
     Event $ \p ->

@@ -127,9 +127,8 @@ bestSuitedLIOParams =
   Event $ \p ->
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
-      i  = lioTimeIndex ps
       i' = round $ (pointTime p - spcStartTime sc) / spcDT sc
-  in return $ ps { lioTimeIndex = max i i' }
+  in return $ ps { lioTimeIndex = i' }
 
 -- | Return parameters for the next nodes.
 nextLIOParams :: Event LIO (LIOParams, LIOParams)
