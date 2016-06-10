@@ -221,7 +221,7 @@ latticeEvent m =
 -- | Run the specified nested computation in the next nodes of the lattice using
 -- the integration time points for calculating the 'latticeTimeIndex',
 -- which will be increased by one. The first result will correspond to
--- the current 'latticeMemberIndex'. The second result will corresponded to
+-- the current 'latticeMemberIndex'. The second result will correspond to
 -- the 'latticeMemberIndex' increased by one.
 --
 -- The current computation within the current lattice node remains intact.
