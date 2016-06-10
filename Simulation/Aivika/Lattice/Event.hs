@@ -222,21 +222,16 @@ latticeEvent m =
 -- the integration time points for calculating the 'latticeTimeIndex',
 -- which will be increased by one. The first result will correspond to
 -- the current 'latticeMemberIndex'. The second result will correspond to
--- the 'latticeMemberIndex' increased by one.
+-- the @latticeMemberIndex@ increased by one.
 --
 -- The current computation within the current lattice node remains intact.
--- Nevertheless, this function has the following important possibly unexpected
--- side effect, which is an essence of the lattice approach at the same time.
+-- Nevertheless, this function has the following important side effect,
+-- which is an essence of the lattice approach at the same time.
 --
--- If the modeling time increases, then we always recompute the 'latticeTimeIndex'
--- so that it will correspond to the current time, where 'latticeMemberIndex'
--- remains the same. It means that the time points of the same simulation can correspond to
--- different lattice nodes. The width of the node is defined by parameter 'spcDT'.
---
--- Therefore, after calling the 'nextEvents' function, we initialize the next
--- two lattice nodes in advance. It may lead to such a situation when the simulation
--- can return immediately right after the time increases, because we pass to the next
--- lattice node, which was already initialized and computed earlier.
+-- The event queue state is memoized in the nodes of the lattice. Each node
+-- is defined by a pair of @latticeTimeIndex@ and @latticeMemberIndex@. It means
+-- that when calling 'nextEvents' next time, we can return the results immediately
+-- without traversing the event queue if the corresponding node was traversed before.
 --
 nextEvents :: Event LIO a -> Event LIO (a, a)
 nextEvents m =
