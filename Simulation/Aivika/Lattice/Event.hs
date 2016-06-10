@@ -36,13 +36,13 @@ instance EventQueueing LIO where
                     -- ^ the underlying priority queue
                     queueBusy :: IORef Bool,
                     -- ^ whether the queue is currently processing events
-                    queueTime :: IORef Double
+                    queueTime :: R.Ref Double
                     -- ^ the actual time of the event queue
                   }
 
   newEventQueue specs =
     do f  <- liftIO $ newIORef False
-       t  <- liftIO $ newIORef (spcStartTime specs)
+       t  <- R.newRef0 (spcStartTime specs)
        pq <- R.newRef0 PQ.emptyQueue
        return EventQueueLIO { queuePQ   = pq,
                               queueBusy = f,
@@ -91,7 +91,9 @@ processPendingEventsCore includingCurrentEvents = Dynamics r where
                         invokeEvent p0 $
                         fmap PQ.queueFront $ R.readRef pq
             let t = queueTime q
-            t' <- readIORef t
+            t' <- invokeLIO ps0 $
+                  invokeEvent p0 $
+                  R.readRef t
             when (t2 < t') $ 
               error "The time value is too small: processPendingEventsCore"
             when ((t2 < pointTime p) ||
@@ -104,9 +106,11 @@ processPendingEventsCore includingCurrentEvents = Dynamics r where
                               pointIteration = n2,
                               pointPhase = -1 }
                  ps2 <- invokeLIO ps0 $
-                        invokeEvent p0
+                        invokeEvent p2
                         bestSuitedLIOParams
-                 writeIORef t t2
+                 invokeLIO ps2 $
+                   invokeEvent p2 $
+                   R.writeRef t t2
                  invokeLIO ps2 $
                    invokeEvent p2 $
                    R.modifyRef pq PQ.dequeue
@@ -121,7 +125,9 @@ processPendingEvents includingCurrentEvents = Dynamics r where
     LIO $ \ps ->
     do let q = runEventQueue $ pointRun p
            t = queueTime q
-       t' <- readIORef t
+       t' <- invokeLIO ps $
+             invokeEvent p $
+             R.readRef t
        if pointTime p < t'
          then error $
               "The current time is less than " ++
