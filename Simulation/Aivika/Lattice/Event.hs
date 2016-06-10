@@ -123,7 +123,7 @@ processPendingEventsUnsafe includingCurrentEvents = Dynamics r where
                               pointPhase = -1 }
                  ps2 <- invokeLIO ps $
                         invokeEvent p2
-                        bestSuitedLIOParams
+                        bestSuitedLIOParamsButLess
                  if ps == ps2
                    then do invokeLIO ps $
                              R.writeRef0 t t2

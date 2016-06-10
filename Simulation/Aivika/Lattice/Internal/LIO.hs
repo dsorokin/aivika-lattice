@@ -21,6 +21,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         rootLIOParams,
         parentLIOParams,
         bestSuitedLIOParams,
+        bestSuitedLIOParamsButLess,
         latticeTimeIndex,
         latticeMemberIndex,
         latticeStartTime) where
@@ -129,6 +130,16 @@ bestSuitedLIOParams =
   let sc = runSpecs (pointRun p)
       i' = floor $ (pointTime p - spcStartTime sc) / spcDT sc
   in return $ ps { lioTimeIndex = i' }
+
+-- | Return the fair parameters corresponding to the best suited lattice node but less parameters.
+bestSuitedLIOParamsButLess :: Event LIO LIOParams
+bestSuitedLIOParamsButLess =
+  Event $ \p ->
+  LIO $ \ps ->
+  let sc = runSpecs (pointRun p)
+      i  = lioTimeIndex ps
+      i' = floor $ (pointTime p - spcStartTime sc) / spcDT sc
+  in return $ ps { lioTimeIndex = max i i' }
 
 -- | Return parameters for the next nodes.
 nextLIOParams :: Event LIO (LIOParams, LIOParams)
