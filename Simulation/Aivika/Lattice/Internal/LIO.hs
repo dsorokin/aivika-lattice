@@ -107,14 +107,6 @@ runLIO m = unLIO m rootLIOParams
 lioParams :: LIO LIOParams
 lioParams = LIO return
 
--- | Return parameters for the next nodes.
-nextLIOParams :: LIOParams -> (LIOParams, LIOParams)
-nextLIOParams ps = (ps1, ps2)
-  where ps1 = ps { lioTimeIndex = 1 + i }
-        ps2 = ps { lioTimeIndex = 1 + i, lioMemberIndex = 1 + k }
-        i   = lioTimeIndex ps
-        k   = lioMemberIndex ps
-
 -- | Return the root node parameters.
 rootLIOParams :: LIOParams
 rootLIOParams = LIOParams { lioTimeIndex = 0,
@@ -135,8 +127,21 @@ bestSuitedLIOParams =
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
       i  = lioTimeIndex ps
-      i' = max i (round $ (spcStopTime sc - spcStartTime sc) / spcDT sc)
+      i' = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
   in return $ ps { lioTimeIndex = max i i' }
+
+-- | Return parameters for the next nodes.
+nextLIOParams :: Event LIO (LIOParams, LIOParams)
+nextLIOParams =
+  Event $ \p ->
+  LIO $ \ps ->
+  let sc  = runSpecs (pointRun p)
+      ps1 = ps { lioTimeIndex = 1 + i', lioMemberIndex = k' }
+      ps2 = ps { lioTimeIndex = 1 + i', lioMemberIndex = 1 + k' }
+      i'  = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
+      k   = lioMemberIndex ps
+      k'  = min i' k
+  in return (ps1, ps2)
 
 -- | Return the lattice time index starting from 0. It is always less than 'latticeSize'.
 latticeTimeIndex :: LIO Int
