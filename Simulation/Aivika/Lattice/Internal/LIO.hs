@@ -135,10 +135,8 @@ bestSuitedLIOParams =
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
       i  = lioTimeIndex ps
-      k  = lioMemberIndex ps
-      i' = round $ (spcStopTime sc - spcStartTime sc) / spcDT sc
-      k' = min i' k
-  in return $ ps { lioTimeIndex = i', lioMemberIndex = k' }
+      i' = max i (round $ (spcStopTime sc - spcStartTime sc) / spcDT sc)
+  in return $ ps { lioTimeIndex = max i i' }
 
 -- | Return the lattice time index starting from 0. It is always less than 'latticeSize'.
 latticeTimeIndex :: LIO Int
