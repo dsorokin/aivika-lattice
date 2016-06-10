@@ -127,7 +127,7 @@ bestSuitedLIOParams =
   Event $ \p ->
   LIO $ \ps ->
   let sc = runSpecs (pointRun p)
-      i' = round $ (pointTime p - spcStartTime sc) / spcDT sc
+      i' = floor $ (pointTime p - spcStartTime sc) / spcDT sc
   in return $ ps { lioTimeIndex = i' }
 
 -- | Return parameters for the next nodes.
@@ -138,7 +138,7 @@ nextLIOParams =
   let sc  = runSpecs (pointRun p)
       ps1 = ps { lioTimeIndex = 1 + i', lioMemberIndex = k' }
       ps2 = ps { lioTimeIndex = 1 + i', lioMemberIndex = 1 + k' }
-      i'  = round $ (pointTime p - spcStartTime sc) / spcDT sc
+      i'  = floor $ (pointTime p - spcStartTime sc) / spcDT sc
       k   = lioMemberIndex ps
       k'  = min i' k
   in return (ps1, ps2)
