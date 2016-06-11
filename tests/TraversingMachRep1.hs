@@ -66,56 +66,22 @@ model =
                    putStr $ ", time index = " ++ show i
                    putStr $ ", member index = " ++ show k
                    putStrLn ""
-                   
-     let forecast :: (a -> a -> Event LIO a) -> Event LIO a -> Simulation LIO (Event LIO a)
-         forecast f m =
-           do r <- newRef Nothing
-              let loop =
-                    do showLatticeNode "get"
-                       b <- readRef r
-                       case b of
-                         Just a  ->
-                           do showLatticeNode "computed"
-                              return a
-                         Nothing ->
-                           do t  <- liftDynamics time
-                              t2 <- liftParameter stoptime
-                              if t >= t2
-                                then do showLatticeNode "leaf"
-                                        a <- m
-                                        a `seq` writeRef r (Just a)
-                                        return a
-                                else do showLatticeNode "reduce"
-                                        (a1, a2) <- nextEvents loop
-                                        a <- f a1 a2
-                                        a `seq` writeRef r (Just a)
-                                        return a
-              return loop
 
-     let accum =
+     let leaf =
            do x <- readRef totalUpTime
               t <- liftDynamics time
-              return $ x / (2 * t)
+              let a = x / (2 * t) 
+              showLatticeNode $ "leaf (" ++ show a ++ ")" 
+              a `seq` return a
 
-     let reduce x1 x2 =
-           do let a = (x1 + x2) / 2
+     let reduce m1 m2 =
+           do a1 <- m1
+              a2 <- m2
+              let a = (a1 + a2) / 2
               showLatticeNode $ "result (" ++ show a ++ ")" 
               a `seq` return a
-     
-     let forecastUpTimeProp :: Event LIO Double
-         forecastUpTimeProp =
-           do t <- liftDynamics time
-              if t >= t2
-                then do x <- readRef totalUpTime
-                        return $ x / (2 * t)
-                else do (x1, x2) <- nextEvents forecastUpTimeProp
-                        let x = (x1 + x2) / 2
-                        x `seq` return x
 
-     -- runEventInStartTime
-     --   forecastUpTimeProp
-
-     r <- forecast reduce accum
+     r <- estimateEvent reduce leaf
 
      runEventInStartTime $
        do showLatticeNode "launch"
