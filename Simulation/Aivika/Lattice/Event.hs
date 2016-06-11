@@ -188,6 +188,8 @@ initEventQueue =
                    invokeEvent p'
                    initEventQueue
           invokeLIO ps $
+            R.defineTopRef0_ pq
+          invokeLIO ps $
             invokeDynamics p $
             processPendingEventsUnsafe True
 
