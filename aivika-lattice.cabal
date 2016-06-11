@@ -24,6 +24,7 @@ extra-source-files:  CHANGELOG.md
                      tests/TraversingLattice2.hs
                      tests/TraversingLattice3.hs
                      tests/TraversingMachRep1.hs
+                     tests/IteratingMachRep1.hs
 
 library
 
