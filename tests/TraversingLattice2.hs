@@ -32,16 +32,18 @@ model =
        enqueueEventWithIntegTimes $
        showLatticeNode "enqueue"
 
-     let traverseLattice :: Event LIO ()
-         traverseLattice =
+     let traverse m1 m2 =
            do showLatticeNode "traverse"
-              t  <- liftDynamics time
-              t2 <- liftParameter stoptime
-              when (t < t2) $
-                nextEvents_ traverseLattice
+              m1
+              m2
+              return ()
+
+     let leaf = showLatticeNode "leaf"
+
+     e <- estimateEvent traverse leaf
 
      runEventInStartTime
-       traverseLattice
+       e
 
      runEventInStopTime $
        return ()
