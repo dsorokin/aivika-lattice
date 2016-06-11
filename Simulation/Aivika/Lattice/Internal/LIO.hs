@@ -20,6 +20,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         nextLIOParams,
         rootLIOParams,
         parentLIOParams,
+        projectLIOParams,
         latticeTimeIndex,
         latticeMemberIndex,
         latticeStartTime) where
@@ -119,6 +120,15 @@ parentLIOParams ps
   | otherwise = Just $ ps { lioTimeIndex = i - 1, lioMemberIndex = max 0 (k - 1) }
   where i = lioTimeIndex ps
         k = lioMemberIndex ps
+
+-- | Return the projected parameters corresponding to the best suited lattice node for the specified time.
+projectLIOParams :: Double -> Parameter LIO LIOParams
+projectLIOParams t =
+  Parameter $ \r ->
+  LIO $ \ps ->
+  let sc = runSpecs r
+      i' = floor $ (t - spcStartTime sc) / spcDT sc
+  in return LIOParams { lioTimeIndex = i', lioMemberIndex = 0 }
 
 -- | Return parameters for the next nodes.
 nextLIOParams :: Event LIO (LIOParams, LIOParams)
