@@ -19,6 +19,10 @@ module Simulation.Aivika.Lattice.Estimate
         EstimateLift(..),
         runEstimateInStartTime,
         estimateTime,
+        -- * Computations within Lattice
+        memoEstimate,
+        estimateUpSide,
+        estimateDownSide,
         -- * Error Handling
         catchEstimate,
         finallyEstimate,
@@ -33,7 +37,7 @@ import Simulation.Aivika.Lattice.Internal.Estimate
 import Simulation.Aivika.Lattice.Internal.LIO
 import qualified Simulation.Aivika.Lattice.Internal.Ref as R
 
--- | Estimate the event computation in the lattice nodes by the specified time.
+-- | Estimate the computation in the lattice nodes.
 memoEstimate :: (Estimate LIO a -> Estimate LIO a)
                 -- ^ estimate in the intermediate time point of the lattice
                 -> Estimate LIO a
@@ -56,3 +60,31 @@ memoEstimate f m =
                           R.writeRef0 r (Just a)
                           return a
      return loop
+
+-- | Estimate the computation in the up side node of the lattice,
+-- where 'latticeTimeIndex' is increased by 1 but 'latticeMemberIndex' remains the same.
+estimateUpSide :: Estimate LIO a -> Estimate LIO a
+estimateUpSide m =
+  Estimate $ \p ->
+  LIO $ \ps ->
+  do let ps' = upSideLIOParams ps
+         r   = pointRun p
+     p' <- invokeLIO ps' $
+           invokeParameter r
+           latticePoint
+     invokeLIO ps' $
+       invokeEstimate p' m
+
+-- | Estimate the computation in the down side node of the lattice,
+-- where the both 'latticeTimeIndex' and 'latticeMemberIndex' are increased by 1.
+estimateDownSide :: Estimate LIO a -> Estimate LIO a
+estimateDownSide m =
+  Estimate $ \p ->
+  LIO $ \ps ->
+  do let ps' = downSideLIOParams ps
+         r   = pointRun p
+     p' <- invokeLIO ps' $
+           invokeParameter r
+           latticePoint
+     invokeLIO ps' $
+       invokeEstimate p' m
