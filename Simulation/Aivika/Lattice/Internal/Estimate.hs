@@ -156,6 +156,9 @@ traceEstimate :: String -> Estimate LIO a -> Estimate LIO a
 traceEstimate message m =
   Estimate $ \p ->
   LIO $ \ps ->
-  trace ("t = " ++ show (pointTime p) ++ ", lattice index = " ++ show ps ++ ": " ++ message) $
+  trace ("t = " ++ show (pointTime p) ++
+         ", lattice time index = " ++ show (lioTimeIndex ps) ++
+         ", lattice member index = " ++ show (lioMemberIndex ps) ++
+         ": " ++ message) $
   invokeLIO ps $
   invokeEstimate p m
