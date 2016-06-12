@@ -27,7 +27,6 @@ import Simulation.Aivika.Trans.Internal.Types
 
 import Simulation.Aivika.Lattice.Internal.LIO
 import Simulation.Aivika.Lattice.Internal.Estimate
-import Simulation.Aivika.Lattice.Internal.Ref
 import qualified Simulation.Aivika.Lattice.Internal.Ref as R
 
 -- | An implementation of the 'EventQueueing' type class.
@@ -195,7 +194,8 @@ initEventQueue =
             invokeDynamics p $
             processPendingEventsUnsafe True
 
--- | Estimate the reference value at the current modeling time.
+-- | Estimate the specified reference.
+estimateRef :: R.Ref a -> Estimate LIO a
 estimateRef r =
   Estimate $ \p ->
   LIO $ \ps ->

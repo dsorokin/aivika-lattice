@@ -1,5 +1,5 @@
 
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 
 -- |
 -- Module     : Simulation.Aivika.Lattice.Ref.Base
@@ -18,9 +18,12 @@ import Simulation.Aivika.Trans.Internal.Types
 import Simulation.Aivika.Trans.Comp
 import Simulation.Aivika.Trans.Simulation
 import Simulation.Aivika.Trans.Ref.Base
+import Simulation.Aivika.Trans.Observable
 
 import Simulation.Aivika.Lattice.Internal.LIO
 import qualified Simulation.Aivika.Lattice.Internal.Ref as R
+import Simulation.Aivika.Lattice.Internal.Estimate
+import Simulation.Aivika.Lattice.Internal.Event
 
 -- | The implementation of mutable references.
 instance MonadRef LIO where
@@ -48,3 +51,9 @@ instance MonadRef0 LIO where
 
   {-# INLINE newRef0 #-}
   newRef0 = fmap Ref . R.newRef0
+
+-- | An instance of the specified type class.
+instance Observable (Ref LIO) (Estimate LIO) where
+
+  {-# INLINE readObservable #-}
+  readObservable (Ref r) = estimateRef r
