@@ -183,7 +183,7 @@ initEventQueue =
             Just ps' ->
               do p' <- invokeLIO ps' $
                        invokeEvent p
-                       latticeStartPoint
+                       latticePoint
                  invokeLIO ps' $
                    invokeEvent p'
                    initEventQueue
@@ -193,12 +193,12 @@ initEventQueue =
             invokeDynamics p $
             processPendingEventsUnsafe True
 
--- | Return the start point in the corresponding lattice node.
-latticeStartPoint :: Event LIO (Point LIO)
-latticeStartPoint =
+-- | Return the point in the corresponding lattice node.
+latticePoint :: Event LIO (Point LIO)
+latticePoint =
   Event $ \p ->
   do let r = pointRun p
-     t <- invokeParameter r latticeStartTime
+     t <- invokeParameter r latticeTime
      let sc = pointSpecs p
          t0 = spcStartTime sc
          dt = spcDT sc
@@ -214,7 +214,7 @@ latticeEvent m =
   LIO $ \ps ->
   do p' <- invokeLIO ps $
            invokeEvent p $
-           latticeStartPoint
+           latticePoint
      invokeLIO ps $
        invokeEvent p' $
        initEventQueue

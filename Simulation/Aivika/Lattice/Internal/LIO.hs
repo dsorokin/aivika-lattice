@@ -23,7 +23,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         projectLIOParams,
         latticeTimeIndex,
         latticeMemberIndex,
-        latticeStartTime) where
+        latticeTime) where
 
 import Data.IORef
 import Data.Maybe
@@ -151,9 +151,9 @@ latticeTimeIndex = LIO $ return . lioTimeIndex
 latticeMemberIndex :: LIO Int
 latticeMemberIndex = LIO $ return . lioMemberIndex
 
--- | Return the start time for the current lattice node.
-latticeStartTime :: Parameter LIO Double
-latticeStartTime =
+-- | Return the time for the current lattice node.
+latticeTime :: Parameter LIO Double
+latticeTime =
   Parameter $ \r ->
   LIO $ \ps ->
   let sc = runSpecs r
