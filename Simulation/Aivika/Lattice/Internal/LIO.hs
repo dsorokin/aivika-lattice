@@ -21,9 +21,11 @@ module Simulation.Aivika.Lattice.Internal.LIO
         parentLIOParams,
         upSideLIOParams,
         downSideLIOParams,
+        shiftLIOParams,
         latticeTimeIndex,
         latticeMemberIndex,
         latticeTime,
+        latticeTimeStep,
         latticePoint) where
 
 import Data.IORef
@@ -37,6 +39,7 @@ import Control.Exception (throw, catch, finally)
 
 import Simulation.Aivika.Trans.Exception
 import Simulation.Aivika.Trans.Internal.Types
+import Simulation.Aivika.Trans.Parameter
 
 -- | The 'LIO' computation that can be run as nested one on the lattice node.
 newtype LIO a = LIO { unLIO :: LIOParams -> IO a
@@ -133,6 +136,25 @@ downSideLIOParams ps = ps { lioTimeIndex = 1 + i, lioMemberIndex = 1 + k }
   where i = lioTimeIndex ps
         k = lioMemberIndex ps
 
+-- | Return the derived LIO params with the specified shift in 'latticeTimeIndex' and
+-- 'latticeMemberIndex' respectively, where the first parameter can be positive only.
+shiftLIOParams :: Int
+                  -- ^ a positive shift the lattice time index
+                  -> Int
+                  -- ^ a shift of the lattice member index
+                  -> LIOParams
+                  -- ^ the source parameters
+                  -> LIOParams
+shiftLIOParams di dk ps
+  | di <= 0   = error "The time index shift must be positive: shiftLIOParams"
+  | k' < 0    = error "The member index cannot be negative: shiftLIOParams"
+  | k' > i'   = error "The member index cannot be greater than the time index: shiftLIOParams"
+  | otherwise = ps { lioTimeIndex = i', lioMemberIndex = k' }
+  where i  = lioTimeIndex ps
+        i' = i + di
+        k  = lioMemberIndex ps
+        k' = k + dk
+
 -- | Return the lattice time index starting from 0. It corresponds to the integration time point.
 latticeTimeIndex :: LIO Int
 latticeTimeIndex = LIO $ return . lioTimeIndex
@@ -165,3 +187,7 @@ latticePoint =
                     pointTime = t,
                     pointIteration = n,
                     pointPhase = -1 }
+
+-- | The time step used when constructing the lattice. Currently, it is equivalent to 'dt'.
+latticeTimeStep :: Parameter LIO Double
+latticeTimeStep = dt

@@ -23,6 +23,8 @@ module Simulation.Aivika.Lattice.Estimate
         memoEstimate,
         estimateUpSide,
         estimateDownSide,
+        estimateFuture,
+        latticeTimeStep,
         -- * Error Handling
         catchEstimate,
         finallyEstimate,
@@ -33,6 +35,8 @@ module Simulation.Aivika.Lattice.Estimate
 import Simulation.Aivika.Trans.Internal.Types
 import Simulation.Aivika.Trans.Simulation
 import Simulation.Aivika.Trans.Parameter
+import Simulation.Aivika.Trans.Ref
+import Simulation.Aivika.Trans.Observable
 import Simulation.Aivika.Lattice.Internal.Estimate
 import Simulation.Aivika.Lattice.Internal.LIO
 import qualified Simulation.Aivika.Lattice.Internal.Ref as R
@@ -63,6 +67,11 @@ memoEstimate f m =
 
 -- | Estimate the computation in the up side node of the lattice,
 -- where 'latticeTimeIndex' is increased by 1 but 'latticeMemberIndex' remains the same.
+--
+-- It is merely equivalent to the following definition:
+--
+-- @estimateUpSide = estimateFuture 1 0@
+--
 estimateUpSide :: Estimate LIO a -> Estimate LIO a
 estimateUpSide m =
   Estimate $ \p ->
@@ -77,11 +86,46 @@ estimateUpSide m =
 
 -- | Estimate the computation in the down side node of the lattice,
 -- where the both 'latticeTimeIndex' and 'latticeMemberIndex' are increased by 1.
+--
+-- It is merely equivalent to the following definition:
+--
+-- @estimateDownSide = estimateFuture 1 1@
+--
 estimateDownSide :: Estimate LIO a -> Estimate LIO a
 estimateDownSide m =
   Estimate $ \p ->
   LIO $ \ps ->
   do let ps' = downSideLIOParams ps
+         r   = pointRun p
+     p' <- invokeLIO ps' $
+           invokeParameter r
+           latticePoint
+     invokeLIO ps' $
+       invokeEstimate p' m
+
+-- | Estimate the computation in the shifted lattice node, where the first parameter
+-- specifies the positive 'latticeTimeIndex' shift, but the second parameter
+-- specifies the 'latticeMemberIndex' shift.
+--
+-- It allows looking into the future computations. The lattice is constructed in such a way
+-- that we can define the past 'Estimate' computations in terms of the future 'Estimate'
+-- computations. That is the point.
+--
+-- Regarding the 'Event' computation, a quite opposite rule is true. The future 'Event' computation
+-- depends on the past 'Event' computations. But we can update 'Ref' references within
+-- the corresponding discrete event simulation and then read them within the 'Estimate'
+-- computation, because 'Ref' is 'Observable'.
+estimateFuture :: Int
+                  -- ^ a positive shift of the lattice time index
+                  -> Int
+                  -- ^ a shift of the lattice member index
+                  -> Estimate LIO a
+                  -- ^ the source computation
+                  -> Estimate LIO a
+estimateFuture di dk m =
+  Estimate $ \p ->
+  LIO $ \ps ->
+  do let ps' = shiftLIOParams di dk ps
          r   = pointRun p
      p' <- invokeLIO ps' $
            invokeParameter r
