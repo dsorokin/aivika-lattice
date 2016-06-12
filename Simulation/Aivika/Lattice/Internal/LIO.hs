@@ -21,6 +21,8 @@ module Simulation.Aivika.Lattice.Internal.LIO
         rootLIOParams,
         parentLIOParams,
         projectLIOParams,
+        upSideLIOParams,
+        downSideLIOParams,
         latticeTimeIndex,
         latticeMemberIndex,
         latticeTime,
@@ -130,6 +132,17 @@ projectLIOParams t =
   let sc = runSpecs r
       i' = floor $ (t - spcStartTime sc) / spcDT sc
   in return LIOParams { lioTimeIndex = i', lioMemberIndex = 0 }
+
+-- | Return the next up side parameters.
+upSideLIOParams :: LIOParams -> LIOParams
+upSideLIOParams ps = ps { lioTimeIndex = 1 + i }
+  where i = lioTimeIndex ps
+
+-- | Return the next down side parameters.
+downSideLIOParams :: LIOParams -> LIOParams
+downSideLIOParams ps = ps { lioTimeIndex = 1 + i, lioMemberIndex = 1 + k }
+  where i = lioTimeIndex ps
+        k = lioMemberIndex ps
 
 -- | Return parameters for the next nodes.
 nextLIOParams :: Event LIO (LIOParams, LIOParams)
