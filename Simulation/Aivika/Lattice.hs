@@ -13,12 +13,14 @@
 module Simulation.Aivika.Lattice
        (-- * Modules
         module Simulation.Aivika.Lattice.LIO,
+        module Simulation.Aivika.Lattice.Estimate,
         module Simulation.Aivika.Lattice.Event,
         module Simulation.Aivika.Lattice.Generator,
         module Simulation.Aivika.Lattice.QueueStrategy,
         module Simulation.Aivika.Lattice.Ref.Base) where
 
 import Simulation.Aivika.Lattice.LIO
+import Simulation.Aivika.Lattice.Estimate
 import Simulation.Aivika.Lattice.Event
 import Simulation.Aivika.Lattice.Generator
 import Simulation.Aivika.Lattice.QueueStrategy

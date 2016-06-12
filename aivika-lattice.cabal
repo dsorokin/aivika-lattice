@@ -29,6 +29,7 @@ extra-source-files:  CHANGELOG.md
 library
 
     exposed-modules: Simulation.Aivika.Lattice
+                     Simulation.Aivika.Lattice.Estimate
                      Simulation.Aivika.Lattice.Event
                      Simulation.Aivika.Lattice.Generator
                      Simulation.Aivika.Lattice.LIO
