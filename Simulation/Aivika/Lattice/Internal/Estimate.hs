@@ -9,11 +9,11 @@
 -- Stability  : experimental
 -- Tested with: GHC 8.0.1
 --
--- The module defines the 'Estimate' monad transformer which is destined for providing
--- with estimating computations within lattice nodes. Such computations are separated
--- from the 'Event' computations. An idea is that the 'Event' computations provides with
--- something that can be observed, while the 'Estimate' computations estimate
--- the received information.
+-- The module defines the 'Estimate' monad transformer which is destined for estimating
+-- computations within lattice nodes. Such computations are separated from the 'Event'
+-- computations. An idea is that the forward-traversing 'Event' computations provide with
+-- something that can be observed, while the backward-traversing 'Estimate' computations
+-- estimate the received information.
 --
 module Simulation.Aivika.Lattice.Internal.Estimate
        (-- * Estimate Monad
@@ -145,7 +145,7 @@ runEstimateInStartTime :: MonadDES m => Estimate m a -> Simulation m a
 {-# INLINE runEstimateInStartTime #-}
 runEstimateInStartTime (Estimate m) = runEventInStartTime (Event m)
 
--- | Like 'time' estimate the current modeling time.
+-- | Like 'time' estimates the current modeling time.
 estimateTime :: MonadDES m => Estimate m Double
 {-# INLINE estimateTime #-}
 estimateTime = Estimate $ return . pointTime

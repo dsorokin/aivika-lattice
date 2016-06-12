@@ -7,11 +7,11 @@
 -- Stability  : experimental
 -- Tested with: GHC 8.0.1
 --
--- The module defines the 'Estimate' monad transformer which is destined for providing
--- with estimating computations within lattice nodes. Such computations are separated
--- from the 'Event' computations. An idea is that the 'Event' computations provides with
--- something that can be observed, while the 'Estimate' computations estimate
--- the received information.
+-- The module defines the 'Estimate' monad transformer which is destined for estimating
+-- computations within lattice nodes. Such computations are separated from the 'Event'
+-- computations. An idea is that the forward-traversing 'Event' computations provide with
+-- something that can be observed, while the backward-traversing 'Estimate' computations
+-- estimate the received information.
 --
 module Simulation.Aivika.Lattice.Estimate
        (-- * Estimate Monad
@@ -19,13 +19,13 @@ module Simulation.Aivika.Lattice.Estimate
         EstimateLift(..),
         runEstimateInStartTime,
         estimateTime,
+        latticeTimeStep,
         -- * Computations within Lattice
         foldEstimate,
         memoEstimate,
         estimateUpSide,
         estimateDownSide,
         estimateFuture,
-        latticeTimeStep,
         -- * Error Handling
         catchEstimate,
         finallyEstimate,
@@ -106,16 +106,16 @@ estimateDownSide m =
 
 -- | Estimate the computation in the shifted lattice node, where the first parameter
 -- specifies the positive 'latticeTimeIndex' shift, but the second parameter
--- specifies the 'latticeMemberIndex' shift.
+-- specifies the 'latticeMemberIndex' shift af any sign.
 --
 -- It allows looking into the future computations. The lattice is constructed in such a way
--- that we can define the past 'Estimate' computations in terms of the future 'Estimate'
--- computations. That is the point.
+-- that we can define the past 'Estimate' computation in terms of the future @Estimate@
+-- computation. That is the point.
 --
--- Regarding the 'Event' computation, a quite opposite rule is true. The future 'Event' computation
--- depends on the past 'Event' computations. But we can update 'Ref' references within
--- the corresponding discrete event simulation and then read them within the 'Estimate'
--- computation, because 'Ref' is 'Observable'.
+-- Regarding the 'Event' computation, a quite opposite rule is true. The future @Event@ computation
+-- depends on the past @Event@ computation. But we can update 'Ref' references within
+-- the corresponding discrete event simulation and then read them within the @Estimate@
+-- computation, because @Ref@ is 'Observable'.
 estimateFuture :: Int
                   -- ^ a positive shift of the lattice time index
                   -> Int
