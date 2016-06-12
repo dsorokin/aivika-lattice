@@ -17,10 +17,8 @@ module Simulation.Aivika.Lattice.Internal.LIO
         invokeLIO,
         runLIO,
         lioParams,
-        nextLIOParams,
         rootLIOParams,
         parentLIOParams,
-        projectLIOParams,
         upSideLIOParams,
         downSideLIOParams,
         latticeTimeIndex,
@@ -124,15 +122,6 @@ parentLIOParams ps
   where i = lioTimeIndex ps
         k = lioMemberIndex ps
 
--- | Return the projected parameters corresponding to the best suited lattice node for the specified time.
-projectLIOParams :: Double -> Parameter LIO LIOParams
-projectLIOParams t =
-  Parameter $ \r ->
-  LIO $ \ps ->
-  let sc = runSpecs r
-      i' = floor $ (t - spcStartTime sc) / spcDT sc
-  in return LIOParams { lioTimeIndex = i', lioMemberIndex = 0 }
-
 -- | Return the next up side parameters.
 upSideLIOParams :: LIOParams -> LIOParams
 upSideLIOParams ps = ps { lioTimeIndex = 1 + i }
@@ -143,19 +132,6 @@ downSideLIOParams :: LIOParams -> LIOParams
 downSideLIOParams ps = ps { lioTimeIndex = 1 + i, lioMemberIndex = 1 + k }
   where i = lioTimeIndex ps
         k = lioMemberIndex ps
-
--- | Return parameters for the next nodes.
-nextLIOParams :: Event LIO (LIOParams, LIOParams)
-nextLIOParams =
-  Event $ \p ->
-  LIO $ \ps ->
-  let sc  = runSpecs (pointRun p)
-      ps1 = ps { lioTimeIndex = 1 + i', lioMemberIndex = k' }
-      ps2 = ps { lioTimeIndex = 1 + i', lioMemberIndex = 1 + k' }
-      i'  = floor $ (pointTime p - spcStartTime sc) / spcDT sc
-      k   = lioMemberIndex ps
-      k'  = min i' k
-  in return (ps1, ps2)
 
 -- | Return the lattice time index starting from 0. It corresponds to the integration time point.
 latticeTimeIndex :: LIO Int

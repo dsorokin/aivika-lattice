@@ -13,8 +13,7 @@
 -- Also it defines basic functions for running nested computations within lattice nodes.
 --
 module Simulation.Aivika.Lattice.Internal.Event
-       (estimateEvent,
-        estimateEventByTime) where
+       (estimateRef) where
 
 import Data.IORef
 
@@ -27,6 +26,8 @@ import Simulation.Aivika.Trans
 import Simulation.Aivika.Trans.Internal.Types
 
 import Simulation.Aivika.Lattice.Internal.LIO
+import Simulation.Aivika.Lattice.Internal.Estimate
+import Simulation.Aivika.Lattice.Internal.Ref
 import qualified Simulation.Aivika.Lattice.Internal.Ref as R
 
 -- | An implementation of the 'EventQueueing' type class.
@@ -174,7 +175,8 @@ initEventQueue :: Event LIO ()
 initEventQueue =
   Event $ \p ->
   LIO $ \ps ->
-  do let pq = queuePQ $ runEventQueue $ pointRun p
+  do let pq = queuePQ $ runEventQueue r
+         r  = pointRun p
      f <- invokeLIO ps $
           R.topRefDefined0 pq
      unless f $
@@ -182,7 +184,7 @@ initEventQueue =
             Nothing  -> error "The root must be initialized: initEventQueue"
             Just ps' ->
               do p' <- invokeLIO ps' $
-                       invokeParameter (pointRun p)
+                       invokeParameter r
                        latticePoint
                  invokeLIO ps' $
                    invokeEvent p'
@@ -193,98 +195,12 @@ initEventQueue =
             invokeDynamics p $
             processPendingEventsUnsafe True
 
--- | Return the computation value in the corresponding lattice node.
-latticeEvent :: Event LIO a -> Event LIO a
-latticeEvent m =
-  Event $ \p ->
+-- | Estimate the reference value at the current modeling time.
+estimateRef r =
+  Estimate $ \p ->
   LIO $ \ps ->
-  do p' <- invokeLIO ps $
-           invokeParameter (pointRun p) $
-           latticePoint
-     invokeLIO ps $
-       invokeEvent p' $
+  do invokeLIO ps $
+       invokeEvent p
        initEventQueue
      invokeLIO ps $
-       invokeEvent p' m
-
--- | Run the specified nested computation in the next nodes of the lattice using
--- the integration time points for calculating the 'latticeTimeIndex',
--- which will be increased by one. The first result will correspond to
--- the current 'latticeMemberIndex'. The second result will correspond to
--- the @latticeMemberIndex@ increased by one.
---
--- The current computation within the current lattice node remains intact.
--- Nevertheless, this function has the following important side effect,
--- which is an essence of the lattice approach at the same time.
---
--- The event queue state is memoized in the nodes of the lattice. Each node
--- is defined by a pair of @latticeTimeIndex@ and @latticeMemberIndex@. It means
--- that when calling @nextEvents@ next time, we can return one of the results immediately
--- without traversing the event queue if the corresponding node was traversed before.
---
-nextEvents :: Event LIO a -> Event LIO (Event LIO a, Event LIO a)
-nextEvents m =
-  Event $ \p ->
-  LIO $ \ps ->
-  do (ps1, ps2) <- invokeLIO ps $
-                   invokeEvent p
-                   nextLIOParams
-     let m1 =
-           Event $ \p ->
-           LIO $ \ps ->
-           invokeLIO ps1 $
-           invokeEvent p $
-           latticeEvent m
-         m2 =
-           Event $ \p ->
-           LIO $ \ps ->
-           invokeLIO ps2 $
-           invokeEvent p $
-           latticeEvent m
-     return (m1, m2)
-
--- | Estimate the event computation in the lattice nodes by the specified time.
-estimateEventByTime :: (Event LIO a -> Event LIO a -> Event LIO a)
-                       -- ^ reduce in the intermediate time point of the lattice
-                       -> Event LIO a
-                       -- ^ estimate in the final time point of the lattice
-                       -> Simulation LIO (Double -> Event LIO a)
-estimateEventByTime f m =
-  do r  <- R.newRef Nothing
-     t2 <- liftParameter stoptime
-     let loop =
-           do b <- R.readRef r
-              case b of
-                Just a  -> return a
-                Nothing ->
-                  do t  <- liftDynamics time
-                     if t >= t2
-                       then do a <- m
-                               a `seq` R.writeRef r (Just a)
-                               return a
-                       else do (m1, m2) <- nextEvents loop
-                               a <- f m1 m2
-                               a `seq` R.writeRef r (Just a)
-                               return a
-     return $ \t ->
-       Event $ \p ->
-       LIO $ \ps ->
-       do ps' <- invokeLIO ps $
-                 invokeParameter (pointRun p) $
-                 projectLIOParams t
-          invokeLIO ps' $
-            invokeEvent p
-            loop
-
--- | Estimate the event computation in the lattice nodes by the current time.
-estimateEvent :: (Event LIO a -> Event LIO a -> Event LIO a)
-                 -- ^ reduce in the intermediate time point of the lattice
-                 -> Event LIO a
-                 -- ^ estimate in the final time point of the lattice
-                 -> Simulation LIO (Event LIO a)
-estimateEvent f m =
-  do e <- estimateEventByTime f m
-     return $
-       Event $ \p ->
-       invokeEvent p $
-       e (pointTime p)
+       R.readRef0 r
