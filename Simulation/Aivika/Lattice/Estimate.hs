@@ -20,6 +20,7 @@ module Simulation.Aivika.Lattice.Estimate
         runEstimateInStartTime,
         estimateTime,
         -- * Computations within Lattice
+        foldEstimate,
         memoEstimate,
         estimateUpSide,
         estimateDownSide,
@@ -132,3 +133,15 @@ estimateFuture di dk m =
            latticePoint
      invokeLIO ps' $
        invokeEstimate p' m
+
+-- | Fold the estimation of the specified computation.
+foldEstimate :: (a -> a -> Estimate LIO a)
+                -- ^ reduce in the intermediate nodes of the lattice
+                -> Estimate LIO a
+                -- ^ estimate the computation in the final time point and beyond it
+                -> Simulation LIO (Estimate LIO a)
+foldEstimate f = memoEstimate g
+  where g m =
+          do a1 <- estimateUpSide m
+             a2 <- estimateDownSide m
+             f a1 a2
