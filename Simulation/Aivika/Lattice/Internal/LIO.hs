@@ -23,7 +23,8 @@ module Simulation.Aivika.Lattice.Internal.LIO
         projectLIOParams,
         latticeTimeIndex,
         latticeMemberIndex,
-        latticeTime) where
+        latticeTime,
+        latticePoint) where
 
 import Data.IORef
 import Data.Maybe
@@ -160,3 +161,18 @@ latticeTime =
       i  = lioTimeIndex ps
       t  = spcStartTime sc + (fromInteger $ toInteger i) * (spcDT sc)
   in return t
+
+-- | Return the point in the corresponding lattice node.
+latticePoint :: Parameter LIO (Point LIO)
+latticePoint =
+  Parameter $ \r ->
+  do t <- invokeParameter r latticeTime
+     let sc = runSpecs r
+         t0 = spcStartTime sc
+         dt = spcDT sc
+         n  = fromIntegral $ floor ((t - t0) / dt)
+     return Point { pointSpecs = sc,
+                    pointRun = r,
+                    pointTime = t,
+                    pointIteration = n,
+                    pointPhase = -1 }

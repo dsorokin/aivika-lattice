@@ -182,7 +182,7 @@ initEventQueue =
             Nothing  -> error "The root must be initialized: initEventQueue"
             Just ps' ->
               do p' <- invokeLIO ps' $
-                       invokeEvent p
+                       invokeParameter (pointRun p)
                        latticePoint
                  invokeLIO ps' $
                    invokeEvent p'
@@ -193,27 +193,13 @@ initEventQueue =
             invokeDynamics p $
             processPendingEventsUnsafe True
 
--- | Return the point in the corresponding lattice node.
-latticePoint :: Event LIO (Point LIO)
-latticePoint =
-  Event $ \p ->
-  do let r = pointRun p
-     t <- invokeParameter r latticeTime
-     let sc = pointSpecs p
-         t0 = spcStartTime sc
-         dt = spcDT sc
-         n  = fromIntegral $ floor ((t - t0) / dt)
-     return $ p { pointTime = t,
-                  pointIteration = n,
-                  pointPhase = -1 }
-
 -- | Return the computation value in the corresponding lattice node.
 latticeEvent :: Event LIO a -> Event LIO a
 latticeEvent m =
   Event $ \p ->
   LIO $ \ps ->
   do p' <- invokeLIO ps $
-           invokeEvent p $
+           invokeParameter (pointRun p) $
            latticePoint
      invokeLIO ps $
        invokeEvent p' $
