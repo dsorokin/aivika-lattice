@@ -43,6 +43,7 @@ import Simulation.Aivika.Trans.DES
 import Simulation.Aivika.Trans.Internal.Types
 import Simulation.Aivika.Trans.Parameter
 import Simulation.Aivika.Trans.Dynamics
+import Simulation.Aivika.Trans.Event
 import Simulation.Aivika.Lattice.Internal.LIO
 
 -- | A value in the 'Estimate' monad transformer represents something
@@ -142,8 +143,7 @@ throwEstimate e =
 -- | Run the 'Estimate' computation in the start time and return the estimate.
 runEstimateInStartTime :: MonadDES m => Estimate m a -> Simulation m a
 {-# INLINE runEstimateInStartTime #-}
-runEstimateInStartTime =
-  undefined
+runEstimateInStartTime (Estimate m) = runEventInStartTime (Event m)
 
 -- | Like 'time' estimate the current modeling time.
 estimateTime :: MonadDES m => Estimate m Double
