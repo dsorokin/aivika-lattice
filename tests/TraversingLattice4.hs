@@ -27,21 +27,32 @@ model =
                    putStr $ ", time index = " ++ show i
                    putStr $ ", member index = " ++ show k
                    putStrLn ""
+
+     r <- newRef 0
                    
      runEventInStartTime $
        enqueueEventWithIntegTimes $
-       showLatticeNode "enqueue"
+       do x <- liftParameter $ randomUniform 0 1
+          writeRef r x
+          showLatticeNode ("enqueue (x = " ++ show x ++ ")") 
 
-     let reduce a b =
-           traceEstimate "reduce" $
-           return ()
+     let reduce :: Double -> Double -> Estimate LIO Double
+         reduce a b =
+           do let x = (a + b) / 2
+              traceEstimate ("reduce (x = " ++ show x ++ ")") $
+                return x
 
      let leaf =
-           traceEstimate "leaf" $
-           return ()
+           do x <- readObservable r
+              traceEstimate ("leaf (x = " ++ show x ++ ")") $
+                return x
 
-     foldEstimate reduce leaf
-       >>= runEstimateInStartTime
+     m <- foldEstimate reduce leaf
+
+     runEstimateInStartTime $
+       do x <- m
+          traceEstimate ("result (x = " ++ show x ++ ")") $
+            return ()
 
      runEventInStopTime $
        showLatticeNode "stop"

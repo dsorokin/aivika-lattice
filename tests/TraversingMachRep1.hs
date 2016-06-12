@@ -55,37 +55,22 @@ model =
 
      t2 <- liftParameter stoptime
 
-     let showLatticeNode :: String -> Event LIO ()
-         showLatticeNode action =
-           do t <- liftDynamics time
-              i <- liftComp latticeTimeIndex
-              k <- liftComp latticeMemberIndex
-              liftIO $
-                do putStr action
-                   putStr $ ": t = " ++ show t
-                   putStr $ ", time index = " ++ show i
-                   putStr $ ", member index = " ++ show k
-                   putStrLn ""
-
      let leaf =
-           do x <- readRef totalUpTime
-              t <- liftDynamics time
-              let a = x / (2 * t) 
-              showLatticeNode $ "leaf (" ++ show a ++ ")" 
-              a `seq` return a
+           do x <- readObservable totalUpTime
+              t <- estimateTime
+              let a = x / (2 * t)
+              traceEstimate ("leaf (" ++ show a ++ ")") $
+                return a
 
-     let reduce m1 m2 =
-           do a1 <- m1
-              a2 <- m2
-              let a = (a1 + a2) / 2
-              showLatticeNode $ "result (" ++ show a ++ ")" 
-              a `seq` return a
+     let reduce a1 a2 =
+           do let a = (a1 + a2) / 2
+              traceEstimate ("result (" ++ show a ++ ")") $ 
+                return a
 
-     r <- estimateEvent reduce leaf
+     r <- foldEstimate reduce leaf
 
-     runEventInStartTime $
-       do showLatticeNode "launch"
-          r
+     runEstimateInStartTime $
+       traceEstimate "launch" r
 
 main :: IO ()
 main =

@@ -32,18 +32,16 @@ model =
        enqueueEventWithIntegTimes $
        showLatticeNode "enqueue"
 
-     let traverse m1 m2 =
-           do showLatticeNode "traverse"
-              m1
-              m2
-              return ()
+     let reduce a b =
+           traceEstimate "reduce" $
+           return ()
 
-     let leaf = showLatticeNode "leaf"
+     let leaf =
+           traceEstimate "leaf" $
+           return ()
 
-     e <- estimateEvent traverse leaf
-
-     runEventInStartTime
-       e
+     foldEstimate reduce leaf
+       >>= runEstimateInStartTime
 
      runEventInStopTime $
        return ()
