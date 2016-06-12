@@ -35,7 +35,8 @@ library
                      Simulation.Aivika.Lattice.QueueStrategy
                      Simulation.Aivika.Lattice.Ref.Base
 
-    other-modules:   Simulation.Aivika.Lattice.Internal.Estimate
+    other-modules:   Simulation.Aivika.Lattice.Internal.Event
+                     Simulation.Aivika.Lattice.Internal.Estimate
                      Simulation.Aivika.Lattice.Internal.LIO
                      Simulation.Aivika.Lattice.Internal.Ref
 
