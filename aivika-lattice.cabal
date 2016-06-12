@@ -35,7 +35,8 @@ library
                      Simulation.Aivika.Lattice.QueueStrategy
                      Simulation.Aivika.Lattice.Ref.Base
 
-    other-modules:   Simulation.Aivika.Lattice.Internal.LIO
+    other-modules:   Simulation.Aivika.Lattice.Internal.Estimate
+                     Simulation.Aivika.Lattice.Internal.LIO
                      Simulation.Aivika.Lattice.Internal.Ref
 
     build-depends:   base >= 3 && < 6,
@@ -47,6 +48,7 @@ library
 
     extensions:      TypeFamilies,
                      MultiParamTypeClasses,
+                     FlexibleInstances,
                      BangPatterns
 
     ghc-options:     -O2
