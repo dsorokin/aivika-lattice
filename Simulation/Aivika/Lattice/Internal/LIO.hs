@@ -146,7 +146,7 @@ shiftLIOParams :: Int
                   -- ^ the source parameters
                   -> LIOParams
 shiftLIOParams di dk ps
-  | di <= 0   = error "The time index shift must be positive: shiftLIOParams"
+  | i' < 0    = error "The time index cannot be negative: shiftLIOParams"
   | k' < 0    = error "The member index cannot be negative: shiftLIOParams"
   | k' > i'   = error "The member index cannot be greater than the time index: shiftLIOParams"
   | otherwise = ps { lioTimeIndex = i', lioMemberIndex = k' }

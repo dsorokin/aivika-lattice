@@ -26,6 +26,7 @@ module Simulation.Aivika.Lattice.Estimate
         estimateUpSide,
         estimateDownSide,
         estimateFuture,
+        shiftEstimate,
         -- * Error Handling
         catchEstimate,
         finallyEstimate,
@@ -71,7 +72,7 @@ memoEstimate f m =
 --
 -- It is merely equivalent to the following definition:
 --
--- @estimateUpSide = estimateFuture 1 0@
+-- @estimateUpSide = shiftEstimate 1 0@
 --
 estimateUpSide :: Estimate LIO a -> Estimate LIO a
 estimateUpSide m =
@@ -90,7 +91,7 @@ estimateUpSide m =
 --
 -- It is merely equivalent to the following definition:
 --
--- @estimateDownSide = estimateFuture 1 1@
+-- @estimateDownSide = shiftEstimate 1 1@
 --
 estimateDownSide :: Estimate LIO a -> Estimate LIO a
 estimateDownSide m =
@@ -105,25 +106,25 @@ estimateDownSide m =
        invokeEstimate p' m
 
 -- | Estimate the computation in the shifted lattice node, where the first parameter
--- specifies the positive 'latticeTimeIndex' shift, but the second parameter
--- specifies the 'latticeMemberIndex' shift af any sign.
+-- specifies the 'latticeTimeIndex' shift of any sign, but the second parameter
+-- specifies the 'latticeMemberIndex' shift af any sign too.
 --
--- It allows looking into the future computations. The lattice is constructed in such a way
+-- It allows looking into the future or past computations. The lattice is constructed in such a way
 -- that we can define the past 'Estimate' computation in terms of the future @Estimate@
 -- computation. That is the point.
 --
 -- Regarding the 'Event' computation, a quite opposite rule is true. The future @Event@ computation
--- depends on the past @Event@ computation. But we can update 'Ref' references within
+-- depends strongly on the past @Event@ computations. But we can update 'Ref' references within
 -- the corresponding discrete event simulation and then read them within the @Estimate@
 -- computation, because @Ref@ is 'Observable'.
-estimateFuture :: Int
-                  -- ^ a positive shift of the lattice time index
-                  -> Int
-                  -- ^ a shift of the lattice member index
-                  -> Estimate LIO a
-                  -- ^ the source computation
-                  -> Estimate LIO a
-estimateFuture di dk m =
+shiftEstimate :: Int
+                 -- ^ a shift of the lattice time index
+                 -> Int
+                 -- ^ a shift of the lattice member index
+                 -> Estimate LIO a
+                 -- ^ the source computation
+                 -> Estimate LIO a
+shiftEstimate di dk m =
   Estimate $ \p ->
   LIO $ \ps ->
   do let ps' = shiftLIOParams di dk ps
@@ -133,6 +134,18 @@ estimateFuture di dk m =
            latticePoint
      invokeLIO ps' $
        invokeEstimate p' m
+
+-- | Like 'shiftEstimate' but only the first argument must be possitive.
+estimateFuture :: Int
+                  -- ^ a positive shift of the lattice time index
+                  -> Int
+                  -- ^ a shift of the lattice member index
+                  -> Estimate LIO a
+                  -- ^ the source computation
+                  -> Estimate LIO a
+estimateFuture di dk m
+  | di <= 0   = error "Expected to see a positive time index shift: estimateFuture"
+  | otherwise = shiftEstimate di dk m
 
 -- | Fold the estimation of the specified computation.
 foldEstimate :: (a -> a -> Estimate LIO a)
