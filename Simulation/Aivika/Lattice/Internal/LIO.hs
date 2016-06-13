@@ -22,6 +22,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         upSideLIOParams,
         downSideLIOParams,
         shiftLIOParams,
+        lioParamsAt,
         latticeTimeIndex,
         latticeMemberIndex,
         latticeTime,
@@ -138,7 +139,7 @@ downSideLIOParams ps = ps { lioTimeIndex = 1 + i, lioMemberIndex = 1 + k }
   where i = lioTimeIndex ps
         k = lioMemberIndex ps
 
--- | Return the derived LIO params with the specified shift in 'latticeTimeIndex' and
+-- | Return the derived parameters with the specified shift in 'latticeTimeIndex' and
 -- 'latticeMemberIndex' respectively, where the first parameter can be positive only.
 shiftLIOParams :: Int
                   -- ^ a positive shift the lattice time index
@@ -156,6 +157,18 @@ shiftLIOParams di dk ps
         i' = i + di
         k  = lioMemberIndex ps
         k' = k + dk
+
+-- | Return the parameters at the specified 'latticeTimeIndex' and 'latticeMemberIndex'.
+lioParamsAt :: Int
+               -- ^ the lattice time index
+               -> Int
+               -- ^ the lattice member index
+               -> LIOParams
+lioParamsAt i k
+  | i < 0     = error "The time index cannot be negative: lioParamsAt"
+  | k < 0     = error "The member index cannot be negative: lioParamsAt"
+  | k > i     = error "The member index cannot be greater than the time index: lioParamsAt"
+  | otherwise = LIOParams { lioTimeIndex = i, lioMemberIndex = k }
 
 -- | Return the lattice time index starting from 0. It corresponds to the integration time point.
 -- The index should be less than 'latticeSize'. 

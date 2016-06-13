@@ -26,6 +26,7 @@ module Simulation.Aivika.Lattice.Estimate
         estimateDownSide,
         estimateFuture,
         shiftEstimate,
+        estimateAt,
         -- * Error Handling
         catchEstimate,
         finallyEstimate,
@@ -145,6 +146,25 @@ estimateFuture :: Int
 estimateFuture di dk m
   | di <= 0   = error "Expected to see a positive time index shift: estimateFuture"
   | otherwise = shiftEstimate di dk m
+
+-- | Estimate the computation at the specified 'latticeTimeIndex' and 'latticeMemberIndex'.
+estimateAt :: Int
+              -- ^ the lattice time index
+              -> Int
+              -- ^ the lattice size index
+              -> Estimate LIO a
+              -- ^ the computation
+              -> Estimate LIO a
+estimateAt i k m =
+  Estimate $ \p ->
+  LIO $ \ps ->
+  do let ps' = lioParamsAt i k
+         r   = pointRun p
+     p' <- invokeLIO ps' $
+           invokeParameter r
+           latticePoint
+     invokeLIO ps' $
+       invokeEstimate p' m
 
 -- | Fold the estimation of the specified computation.
 foldEstimate :: (a -> a -> Estimate LIO a)
