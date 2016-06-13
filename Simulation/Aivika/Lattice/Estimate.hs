@@ -10,8 +10,8 @@
 -- The module defines the 'Estimate' monad transformer which is destined for estimating
 -- computations within lattice nodes. Such computations are separated from the 'Event'
 -- computations. An idea is that the forward-traversing 'Event' computations provide with
--- something that can be observed, while the backward-traversing 'Estimate' computations
--- estimate the received information.
+-- something that can be observed, while the 'Estimate' computations estimate the received
+-- information and they can be backward-traversing.
 --
 module Simulation.Aivika.Lattice.Estimate
        (-- * Estimate Monad
