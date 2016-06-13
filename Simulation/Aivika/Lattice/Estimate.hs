@@ -113,7 +113,7 @@ estimateDownSide m =
 -- that we can define the past 'Estimate' computation in terms of the future @Estimate@
 -- computation. That is the point.
 --
--- Regarding the 'Event' computation, a quite opposite rule is true. The future @Event@ computation
+-- Regarding the 'Event' computation, it is quite different. The future @Event@ computation
 -- depends strongly on the past @Event@ computations. But we can update 'Ref' references within
 -- the corresponding discrete event simulation and then read them within the @Estimate@
 -- computation, because @Ref@ is 'Observable'.
