@@ -26,7 +26,9 @@ module Simulation.Aivika.Lattice.Internal.LIO
         latticeMemberIndex,
         latticeTime,
         latticeTimeStep,
-        latticePoint) where
+        latticePoint,
+        latticeSize,
+        findLatticeTimeIndex) where
 
 import Data.IORef
 import Data.Maybe
@@ -156,6 +158,7 @@ shiftLIOParams di dk ps
         k' = k + dk
 
 -- | Return the lattice time index starting from 0. It corresponds to the integration time point.
+-- The index should be less than 'latticeSize'. 
 latticeTimeIndex :: LIO Int
 latticeTimeIndex = LIO $ return . lioTimeIndex
 
@@ -169,8 +172,10 @@ latticeTime =
   Parameter $ \r ->
   LIO $ \ps ->
   let sc = runSpecs r
+      t0 = spcStartTime sc
+      dt = spcDT sc
       i  = lioTimeIndex ps
-      t  = spcStartTime sc + (fromInteger $ toInteger i) * (spcDT sc)
+      t  = t0 + (fromInteger $ toInteger i) * dt
   in return t
 
 -- | Return the point in the corresponding lattice node.
@@ -191,3 +196,24 @@ latticePoint =
 -- | The time step used when constructing the lattice. Currently, it is equivalent to 'dt'.
 latticeTimeStep :: Parameter LIO Double
 latticeTimeStep = dt
+
+-- | Return the lattice size.
+latticeSize :: Parameter LIO Int
+latticeSize =
+  Parameter $ \r ->
+  do let sc = runSpecs r
+         t0 = spcStartTime sc
+         t2 = spcStopTime sc
+         dt = spcDT sc
+         i  = fromIntegral $ floor ((t2 - t0) / dt)
+     return (i + 1)
+
+-- | Find the lattice time index for the specified modeling time.
+findLatticeTimeIndex :: Double -> Parameter LIO Double
+findLatticeTimeIndex t =
+  Parameter $ \r ->
+  do let sc = runSpecs r
+         t0 = spcStartTime sc
+         dt = spcDT sc
+         i  = fromIntegral $ floor ((t - t0) / dt)
+     return i

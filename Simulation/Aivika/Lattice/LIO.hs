@@ -13,7 +13,11 @@ module Simulation.Aivika.Lattice.LIO
        (LIO,
         runLIO,
         latticeTimeIndex,
-        latticeMemberIndex) where
+        latticeMemberIndex,
+        latticeSize,
+        latticeTime,
+        latticeTimeStep,
+        findLatticeTimeIndex) where
 
 import Simulation.Aivika.Trans.Comp
 import Simulation.Aivika.Trans.DES

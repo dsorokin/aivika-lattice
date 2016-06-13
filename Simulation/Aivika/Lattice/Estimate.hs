@@ -19,7 +19,6 @@ module Simulation.Aivika.Lattice.Estimate
         EstimateLift(..),
         runEstimateInStartTime,
         estimateTime,
-        latticeTimeStep,
         -- * Computations within Lattice
         foldEstimate,
         memoEstimate,
