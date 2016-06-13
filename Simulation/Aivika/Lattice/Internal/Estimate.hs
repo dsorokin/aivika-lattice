@@ -146,6 +146,7 @@ runEstimateInStartTime :: MonadDES m => Estimate m a -> Simulation m a
 runEstimateInStartTime (Estimate m) = runEventInStartTime (Event m)
 
 -- | Like 'time' estimates the current modeling time.
+-- It is more effcient than 'latticeTime'.
 estimateTime :: MonadDES m => Estimate m Double
 {-# INLINE estimateTime #-}
 estimateTime = Estimate $ return . pointTime
