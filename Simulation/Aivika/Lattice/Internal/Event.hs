@@ -3,7 +3,7 @@
 
 -- |
 -- Module     : Simulation.Aivika.Lattice.Internal.Event
--- Copyright  : Copyright (c) 2016, David Sorokin <david.sorokin@gmail.com>
+-- Copyright  : Copyright (c) 2016-2017, David Sorokin <david.sorokin@gmail.com>
 -- License    : BSD3
 -- Maintainer : David Sorokin <david.sorokin@gmail.com>
 -- Stability  : experimental
@@ -13,7 +13,8 @@
 -- Also it defines basic functions for running nested computations within lattice nodes.
 --
 module Simulation.Aivika.Lattice.Internal.Event
-       (estimateRef) where
+       (estimateStrictRef,
+        estimateLazyRef) where
 
 import Data.IORef
 
@@ -27,7 +28,8 @@ import Simulation.Aivika.Trans.Internal.Types
 
 import Simulation.Aivika.Lattice.Internal.LIO
 import Simulation.Aivika.Lattice.Internal.Estimate
-import qualified Simulation.Aivika.Lattice.Internal.Ref as R
+import qualified Simulation.Aivika.Lattice.Internal.Ref.Strict as R
+import qualified Simulation.Aivika.Lattice.Internal.Ref.Lazy as LazyR
 
 -- | An implementation of the 'EventQueueing' type class.
 instance EventQueueing LIO where
@@ -195,8 +197,8 @@ initEventQueue =
             processPendingEventsUnsafe True
 
 -- | Estimate the specified reference.
-estimateRef :: R.Ref a -> Estimate LIO a
-estimateRef r =
+estimateStrictRef :: R.Ref a -> Estimate LIO a
+estimateStrictRef r =
   Estimate $ \p ->
   LIO $ \ps ->
   do invokeLIO ps $
@@ -204,3 +206,14 @@ estimateRef r =
        initEventQueue
      invokeLIO ps $
        R.readRef0 r
+
+-- | Estimate the specified reference.
+estimateLazyRef :: LazyR.Ref a -> Estimate LIO a
+estimateLazyRef r =
+  Estimate $ \p ->
+  LIO $ \ps ->
+  do invokeLIO ps $
+       invokeEvent p
+       initEventQueue
+     invokeLIO ps $
+       LazyR.readRef0 r

@@ -1,4 +1,6 @@
-This experimental package extends the [aivika-transformers] [1] library with facilities for 
-running nested discrete event simulations within lattice nodes.
+Nested discrete event simulation module for the Aivika library using lattice
 
-[1]: http://hackage.haskell.org/package/aivika-transformers  "aivika-transformers"
+This experimental [aivika-lattice](http://hackage.haskell.org/package/aivika-lattice) package extends 
+the [aivika-transformers](http://hackage.haskell.org/package/aivika-transformers) library 
+and allows running nested discrete event simulations within lattice nodes, because of which
+traversing the nodes of branching has a quadratic complexity.

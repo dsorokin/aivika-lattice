@@ -1,7 +1,7 @@
 
 -- |
 -- Module     : Simulation.Aivika.Branch.LIO
--- Copyright  : Copyright (c) 2016, David Sorokin <david.sorokin@gmail.com>
+-- Copyright  : Copyright (c) 2016-2017, David Sorokin <david.sorokin@gmail.com>
 -- License    : BSD3
 -- Maintainer : David Sorokin <david.sorokin@gmail.com>
 -- Stability  : experimental
@@ -30,7 +30,8 @@ import Simulation.Aivika.Trans.QueueStrategy
 import Simulation.Aivika.Lattice.Internal.LIO
 import Simulation.Aivika.Lattice.Event
 import Simulation.Aivika.Lattice.Generator
-import Simulation.Aivika.Lattice.Ref.Base
+import Simulation.Aivika.Lattice.Ref.Base.Lazy
+import Simulation.Aivika.Lattice.Ref.Base.Strict
 import Simulation.Aivika.Lattice.QueueStrategy
 
 instance MonadDES LIO
