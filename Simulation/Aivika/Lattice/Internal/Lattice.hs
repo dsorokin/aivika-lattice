@@ -34,8 +34,8 @@ data LIOLattice =
 newRandomLattice :: Int -> IO LIOLattice
 newRandomLattice m =
   do g <- MWC.withSystemRandom (return :: MWC.GenIO -> IO MWC.GenIO)
-     xss0 <- forM [0, m] $ \i ->
-       do xs0 <- forM [0, i] $ \k ->
+     xss0 <- forM [0 .. m] $ \i ->
+       do xs0 <- forM [0 .. i] $ \k ->
             if k == 0
             then return k
             else if k == i
