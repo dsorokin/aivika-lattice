@@ -49,6 +49,7 @@ library
                      Simulation.Aivika.Lattice.Internal.Ref.Strict
 
     build-depends:   base >= 3 && < 6,
+                     array >= 0.3.0.0,
                      mtl >= 2.1.1,
                      containers >= 0.4.0.0,
                      random >= 1.0.0.3,
