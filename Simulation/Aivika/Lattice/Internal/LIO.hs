@@ -182,7 +182,7 @@ lioParamsAt i k ps
   | k > i     = error "The member index cannot be greater than the time index: lioParamsAt"
   | otherwise = ps { lioTimeIndex = i, lioMemberIndex = k }
 
--- | Return the lattice time index starting from 0. The index should be less than 'latticeSize'. 
+-- | Return the lattice time index starting from 0. The index should be less than or equaled to 'latticeSize'. 
 latticeTimeIndex :: LIO Int
 latticeTimeIndex = LIO $ return . lioTimeIndex
 
