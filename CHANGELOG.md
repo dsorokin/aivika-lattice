@@ -1,4 +1,9 @@
 
+Version 0.4
+-----
+
+* Allow specifying the lattice.
+
 Version 0.3
 -----
 

@@ -1,5 +1,5 @@
 name:            aivika-lattice
-version:         0.3
+version:         0.4
 synopsis:        Nested discrete event simulation module for the Aivika library using lattice
 description:
     This experimental package extends the aivika-transformers [1] library and allows 
@@ -42,6 +42,7 @@ library
 
     other-modules:   Simulation.Aivika.Lattice.Internal.Event
                      Simulation.Aivika.Lattice.Internal.Estimate
+                     Simulation.Aivika.Lattice.Internal.Lattice
                      Simulation.Aivika.Lattice.Internal.LIO
                      Simulation.Aivika.Lattice.Internal.Ref
                      Simulation.Aivika.Lattice.Internal.Ref.Lazy
