@@ -26,7 +26,7 @@ meanRepairTime = 0.5
 
 specs = Specs { spcStartTime = 0.0,
                 spcStopTime = 1000.0,
-                spcDT = 100.0,
+                spcDT = 0.1,
                 spcMethod = RungeKutta4,
                 spcGeneratorType = SimpleGenerator }
         
@@ -67,7 +67,8 @@ model =
 
 main :: IO ()
 main =
-  runLIO $
-  printSimulationResultsInStopTime
-  printResultSourceInEnglish
-  model specs
+  do lattice <- newRandomLattice 10
+     runLIO lattice $
+       printSimulationResultsInStopTime
+       printResultSourceInEnglish
+       model specs
