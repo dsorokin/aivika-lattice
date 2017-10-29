@@ -114,7 +114,7 @@ invokeLIO :: LIOParams -> LIO a -> IO a
 {-# INLINE invokeLIO #-}
 invokeLIO ps (LIO m) = m ps
 
--- | Run the 'LIO' computation using the integration times points as lattice nodes.
+-- | Run the 'LIO' computation using the specified lattice.
 runLIO :: LIOLattice -> LIO a -> IO a
 runLIO lattice m = unLIO m $ rootLIOParams lattice
 
