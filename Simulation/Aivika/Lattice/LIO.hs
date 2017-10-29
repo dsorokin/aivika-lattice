@@ -11,6 +11,9 @@
 --
 module Simulation.Aivika.Lattice.LIO
        (LIO,
+        LIOLattice,
+        lattice,
+        newRandomLattice,
         runLIO,
         latticeTimeIndex,
         latticeMemberIndex,

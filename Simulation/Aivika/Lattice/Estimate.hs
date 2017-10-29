@@ -158,7 +158,7 @@ estimateAt :: Int
 estimateAt i k m =
   Estimate $ \p ->
   LIO $ \ps ->
-  do let ps' = lioParamsAt i k
+  do let ps' = lioParamsAt i k ps
          r   = pointRun p
      p' <- invokeLIO ps' $
            invokeParameter r

@@ -14,6 +14,9 @@
 module Simulation.Aivika.Lattice.Internal.LIO
        (LIOParams(..),
         LIO(..),
+        LIOLattice(..),
+        lattice,
+        newRandomLattice,
         invokeLIO,
         runLIO,
         lioParams,
@@ -44,6 +47,8 @@ import Simulation.Aivika.Trans.Exception
 import Simulation.Aivika.Trans.Internal.Types
 import Simulation.Aivika.Trans.Parameter
 
+import Simulation.Aivika.Lattice.Internal.Lattice
+
 -- | The 'LIO' computation that can be run as nested one on the lattice node.
 newtype LIO a = LIO { unLIO :: LIOParams -> IO a
                       -- ^ Unwrap the computation.
@@ -51,11 +56,13 @@ newtype LIO a = LIO { unLIO :: LIOParams -> IO a
 
 -- | The parameters of the 'LIO' computation.
 data LIOParams =
-  LIOParams { lioTimeIndex :: !Int,
+  LIOParams { lioLattice :: LIOLattice,
+              -- ^ The lattice.
+              lioTimeIndex :: !Int,
               -- ^ The time index.
               lioMemberIndex :: !Int
               -- ^ The member index.
-            } deriving (Eq, Ord, Show)
+            }
 
 instance Monad LIO where
 
@@ -108,25 +115,28 @@ invokeLIO :: LIOParams -> LIO a -> IO a
 invokeLIO ps (LIO m) = m ps
 
 -- | Run the 'LIO' computation using the integration times points as lattice nodes.
-runLIO :: LIO a -> IO a
-runLIO m = unLIO m rootLIOParams
+runLIO :: LIOLattice -> LIO a -> IO a
+runLIO lattice m = unLIO m $ rootLIOParams lattice
 
 -- | Return the parameters of the computation.
 lioParams :: LIO LIOParams
 lioParams = LIO return
 
 -- | Return the root node parameters.
-rootLIOParams :: LIOParams
-rootLIOParams = LIOParams { lioTimeIndex = 0,
-                            lioMemberIndex = 0 }
+rootLIOParams :: LIOLattice -> LIOParams
+rootLIOParams lattice =
+  LIOParams { lioLattice = lattice,
+              lioTimeIndex = 0,
+              lioMemberIndex = 0 }
 
 -- | Return the parent parameters.
 parentLIOParams :: LIOParams -> Maybe LIOParams
 parentLIOParams ps
   | i == 0    = Nothing
-  | otherwise = Just $ ps { lioTimeIndex = i - 1, lioMemberIndex = max 0 (k - 1) }
-  where i = lioTimeIndex ps
-        k = lioMemberIndex ps
+  | otherwise = Just $ ps { lioTimeIndex = i - 1, lioMemberIndex = k' }
+  where i  = lioTimeIndex ps
+        k  = lioMemberIndex ps
+        k' = lioParentMemberIndex (lioLattice ps) i k
 
 -- | Return the next up side parameters.
 upSideLIOParams :: LIOParams -> LIOParams
@@ -164,11 +174,13 @@ lioParamsAt :: Int
                -> Int
                -- ^ the lattice member index
                -> LIOParams
-lioParamsAt i k
+               -- ^ the source parameters
+               -> LIOParams
+lioParamsAt i k ps
   | i < 0     = error "The time index cannot be negative: lioParamsAt"
   | k < 0     = error "The member index cannot be negative: lioParamsAt"
   | k > i     = error "The member index cannot be greater than the time index: lioParamsAt"
-  | otherwise = LIOParams { lioTimeIndex = i, lioMemberIndex = k }
+  | otherwise = ps { lioTimeIndex = i, lioMemberIndex = k }
 
 -- | Return the lattice time index starting from 0. It corresponds to the integration time point.
 -- The index should be less than 'latticeSize'. 
@@ -186,7 +198,9 @@ latticeTime =
   LIO $ \ps ->
   let sc = runSpecs r
       t0 = spcStartTime sc
-      dt = spcDT sc
+      t2 = spcStopTime sc
+      m  = lioSize $ lioLattice ps
+      dt = (t2 - t0) / (fromIntegral m)
       i  = lioTimeIndex ps
       t  = t0 + (fromInteger $ toInteger i) * dt
   in return t
@@ -206,27 +220,30 @@ latticePoint =
                     pointIteration = n,
                     pointPhase = -1 }
 
--- | The time step used when constructing the lattice. Currently, it is equivalent to 'dt'.
+-- | Return the lattice time step.
 latticeTimeStep :: Parameter LIO Double
-latticeTimeStep = dt
-
--- | Return the lattice size.
-latticeSize :: Parameter LIO Int
-latticeSize =
+latticeTimeStep =
   Parameter $ \r ->
+  LIO $ \ps ->
   do let sc = runSpecs r
          t0 = spcStartTime sc
          t2 = spcStopTime sc
-         dt = spcDT sc
-         i  = fromIntegral $ floor ((t2 - t0) / dt)
-     return (i + 1)
+         m  = lioSize $ lioLattice ps
+         dt = (t2 - t0) / (fromIntegral m)
+     return dt
 
--- | Find the lattice time index for the specified modeling time.
+-- | Return the lattice size.
+latticeSize :: LIO Int
+latticeSize = LIO $ return . lioSize . lioLattice
+
+-- | Find the lattice time index by the specified modeling time.
 findLatticeTimeIndex :: Double -> Parameter LIO Double
 findLatticeTimeIndex t =
   Parameter $ \r ->
+  LIO $ \ps ->
   do let sc = runSpecs r
          t0 = spcStartTime sc
-         dt = spcDT sc
-         i  = fromIntegral $ floor ((t - t0) / dt)
+         t2 = spcStopTime sc
+         m  = lioSize $ lioLattice ps
+         i  = fromIntegral $ floor (fromIntegral m * ((t - t0) / (t2 - t0)))
      return i
