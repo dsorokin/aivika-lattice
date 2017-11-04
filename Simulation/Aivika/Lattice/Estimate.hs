@@ -151,7 +151,7 @@ estimateFuture di dk m
 estimateAt :: Int
               -- ^ the lattice time index
               -> Int
-              -- ^ the lattice size index
+              -- ^ the lattice member index
               -> Estimate LIO a
               -- ^ the computation
               -> Estimate LIO a
