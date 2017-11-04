@@ -1,5 +1,5 @@
 
--- A binomial options pricing model
+-- A binomial option pricing model
 
 import Control.Monad
 import Control.Monad.Trans
