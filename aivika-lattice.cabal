@@ -55,8 +55,8 @@ library
                      containers >= 0.4.0.0,
                      random >= 1.0.0.3,
                      mwc-random >= 0.13.0.0,
-                     aivika >= 5.2,
-                     aivika-transformers >= 5.2
+                     aivika >= 5.4,
+                     aivika-transformers >= 5.4
 
     extensions:      TypeFamilies,
                      MultiParamTypeClasses,
