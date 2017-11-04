@@ -1,5 +1,12 @@
 
--- A binomial option pricing model
+{-
+  A binomial option pricing model
+
+  Assume a put option with strike price $110 currently trading at $100 and
+  expiring in three years. Annual risk free rate is at 5\%. Price is expected
+  to increase 20\% and decrease 15\% every six months. It is necessary to estimate
+  the price of the put option.
+ -}
 
 import Control.Monad
 import Control.Monad.Trans
@@ -22,7 +29,7 @@ strikePrice = 110.0
 r = 0.05
 
 -- the lattice size (defines the time of execution)
-n = 100
+n = 6
 
 specs = Specs { spcStartTime = 0.0,
                 spcStopTime = fromIntegral n * 0.5,
