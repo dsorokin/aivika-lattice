@@ -1,4 +1,11 @@
 
+Version 0.5
+-----
+
+* Added the latticeTimes and enqueueWithLatticeTimes functions.
+
+* Added the latticeParentMemberIndex function.
+
 Version 0.4
 -----
 

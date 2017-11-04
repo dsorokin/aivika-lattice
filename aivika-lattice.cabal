@@ -1,5 +1,5 @@
 name:            aivika-lattice
-version:         0.4
+version:         0.5
 synopsis:        Nested discrete event simulation module for the Aivika library using lattice
 description:
     This experimental package extends the aivika-transformers [1] library and allows 
@@ -20,6 +20,7 @@ build-type:      Simple
 tested-with:     GHC == 7.10.3
 
 extra-source-files:  CHANGELOG.md
+                     tests/Distribution.hs
                      tests/MachRep1.hs
                      tests/TraversingLattice1.hs
                      tests/TraversingLattice2.hs

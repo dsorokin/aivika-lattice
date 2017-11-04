@@ -71,7 +71,7 @@ model =
 
 main :: IO ()
 main =
-  do lattice <- newRandomLattice 10
-     a <- runLIO lattice $
+  do lat <- newRandomLattice 10
+     a <- runLIO lat $
           runSimulation model specs
      print a

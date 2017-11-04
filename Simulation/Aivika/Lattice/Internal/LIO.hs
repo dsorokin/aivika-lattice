@@ -28,7 +28,9 @@ module Simulation.Aivika.Lattice.Internal.LIO
         lioParamsAt,
         latticeTimeIndex,
         latticeMemberIndex,
+        latticeParentMemberIndex,
         latticeTime,
+        latticeTimes,
         latticeTimeStep,
         latticePoint,
         latticeSize,
@@ -45,6 +47,7 @@ import Control.Exception (throw, catch, finally)
 
 import Simulation.Aivika.Trans.Exception
 import Simulation.Aivika.Trans.Internal.Types
+import Simulation.Aivika.Trans.Internal.Specs
 import Simulation.Aivika.Trans.Parameter
 
 import Simulation.Aivika.Lattice.Internal.Lattice
@@ -190,34 +193,37 @@ latticeTimeIndex = LIO $ return . lioTimeIndex
 latticeMemberIndex :: LIO Int
 latticeMemberIndex = LIO $ return . lioMemberIndex
 
+-- | Return the parent member index starting from 0 for non-root lattice nodes.
+latticeParentMemberIndex :: LIO (Maybe Int)
+latticeParentMemberIndex = LIO $ return . fmap lioMemberIndex . parentLIOParams
+
 -- | Return the time for the current lattice node.
 latticeTime :: Parameter LIO Double
 latticeTime =
   Parameter $ \r ->
   LIO $ \ps ->
-  let sc = runSpecs r
-      t0 = spcStartTime sc
-      t2 = spcStopTime sc
-      m  = lioSize $ lioLattice ps
-      dt = (t2 - t0) / (fromIntegral m)
-      i  = lioTimeIndex ps
-      t  = t0 + (fromInteger $ toInteger i) * dt
-  in return t
+  let i = lioTimeIndex ps
+  in invokeLIO ps $
+     invokeParameter r $
+     getLatticeTimeByIndex i
+
+-- | Return the time values in the lattice nodes.
+latticeTimes :: Parameter LIO [Double]
+latticeTimes =
+  Parameter $ \r ->
+  LIO $ \ps ->
+  let m  = lioSize $ lioLattice ps
+  in forM [0 .. m] $ \i ->
+     invokeLIO ps $
+     invokeParameter r $
+     getLatticeTimeByIndex i
 
 -- | Return the point in the corresponding lattice node.
 latticePoint :: Parameter LIO (Point LIO)
 latticePoint =
   Parameter $ \r ->
   do t <- invokeParameter r latticeTime
-     let sc = runSpecs r
-         t0 = spcStartTime sc
-         dt = spcDT sc
-         n  = fromIntegral $ floor ((t - t0) / dt)
-     return Point { pointSpecs = sc,
-                    pointRun = r,
-                    pointTime = t,
-                    pointIteration = n,
-                    pointPhase = -1 }
+     return $ pointAt r t
 
 -- | Return the lattice time step.
 latticeTimeStep :: Parameter LIO Double
@@ -236,7 +242,7 @@ latticeSize :: LIO Int
 latticeSize = LIO $ return . lioSize . lioLattice
 
 -- | Find the lattice time index by the specified modeling time.
-findLatticeTimeIndex :: Double -> Parameter LIO Double
+findLatticeTimeIndex :: Double -> Parameter LIO Int
 findLatticeTimeIndex t =
   Parameter $ \r ->
   LIO $ \ps ->
@@ -244,5 +250,22 @@ findLatticeTimeIndex t =
          t0 = spcStartTime sc
          t2 = spcStopTime sc
          m  = lioSize $ lioLattice ps
-         i  = fromIntegral $ floor (fromIntegral m * ((t - t0) / (t2 - t0)))
+         i | t == t0   = 0
+           | t == t2   = m
+           | otherwise = floor (fromIntegral m * ((t - t0) / (t2 - t0)))
      return i
+
+-- | Get the modeling time in the lattice node by the specified time index. 
+getLatticeTimeByIndex :: Int -> Parameter LIO Double
+getLatticeTimeByIndex i =
+  Parameter $ \r ->
+  LIO $ \ps ->
+  let sc = runSpecs r
+      t0 = spcStartTime sc
+      t2 = spcStopTime sc
+      m  = lioSize $ lioLattice ps
+      dt = (t2 - t0) / (fromIntegral m)
+      t | i == 0    = t0
+        | i == m    = t2
+        | otherwise = t0 + (fromInteger $ toInteger i) * dt
+  in return t

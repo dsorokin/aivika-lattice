@@ -67,8 +67,8 @@ model =
 
 main :: IO ()
 main =
-  do lattice <- newRandomLattice 10
-     runLIO lattice $
+  do lat <- newRandomLattice 10
+     runLIO lat $
        printSimulationResultsInStopTime
        printResultSourceInEnglish
        model specs

@@ -17,11 +17,15 @@ module Simulation.Aivika.Lattice.LIO
         runLIO,
         latticeTimeIndex,
         latticeMemberIndex,
+        latticeParentMemberIndex,
         latticeSize,
         latticeTime,
+        latticeTimes,
         latticeTimeStep,
-        findLatticeTimeIndex) where
+        findLatticeTimeIndex,
+        enqueueEventWithLatticeTimes) where
 
+import Simulation.Aivika.Trans
 import Simulation.Aivika.Trans.Comp
 import Simulation.Aivika.Trans.DES
 import Simulation.Aivika.Trans.Exception
@@ -45,4 +49,10 @@ instance MonadComp LIO
 instance EventIOQueueing LIO where
 
   enqueueEventIO = enqueueEvent
+
+-- | Actuate the event handler in the lattice node time points.
+enqueueEventWithLatticeTimes :: Event LIO () -> Event LIO ()
+enqueueEventWithLatticeTimes m =
+  do ts <- liftParameter latticeTimes
+     enqueueEventWithTimes ts m
   
