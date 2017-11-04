@@ -20,6 +20,7 @@ build-type:      Simple
 tested-with:     GHC == 7.10.3
 
 extra-source-files:  CHANGELOG.md
+                     examples/BinomialPricingModel.hs
                      tests/Distribution.hs
                      tests/MachRep1.hs
                      tests/TraversingLattice1.hs
