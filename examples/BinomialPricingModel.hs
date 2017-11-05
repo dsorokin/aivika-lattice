@@ -3,8 +3,8 @@
   A binomial option pricing model
 
   Assume a put option with strike price $110 currently trading at $100 and
-  expiring in one year. Annual risk free rate is at 5\%. Price is expected
-  to increase 20\% and decrease 15\% every six months. It is necessary to estimate
+  expiring in one year. Annual risk free rate is at 5%. Price is expected
+  to increase 20% and decrease 15% every six months. It is necessary to estimate
   the price of the put option.
  -}
 
