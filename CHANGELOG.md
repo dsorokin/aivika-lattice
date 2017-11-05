@@ -1,4 +1,9 @@
 
+Version 0.6
+-----
+
+* Added the newRandomLatticeWithProb function.
+
 Version 0.5
 -----
 

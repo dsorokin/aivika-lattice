@@ -17,6 +17,7 @@ module Simulation.Aivika.Lattice.Internal.LIO
         LIOLattice(..),
         lattice,
         newRandomLattice,
+        newRandomLatticeWithProb,
         invokeLIO,
         runLIO,
         lioParams,
