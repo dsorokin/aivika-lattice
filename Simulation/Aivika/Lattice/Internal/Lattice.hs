@@ -32,7 +32,7 @@ data LIOLattice =
              }
 
 -- | Create a new random lattice by the specified probability and size,
--- where the probabilty defines whether the interior child node derives
+-- where the probability defines whether the interior child node derives
 -- from the right parent.
 newRandomLatticeWithProb :: Double -> Int -> IO LIOLattice
 newRandomLatticeWithProb p m =
