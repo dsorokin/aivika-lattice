@@ -3,7 +3,7 @@
   A binomial option pricing model
 
   Assume a put option with strike price $110 currently trading at $100 and
-  expiring in three years. Annual risk free rate is at 5\%. Price is expected
+  expiring in one year. Annual risk free rate is at 5\%. Price is expected
   to increase 20\% and decrease 15\% every six months. It is necessary to estimate
   the price of the put option.
  -}
@@ -15,9 +15,16 @@ import Simulation.Aivika.Trans
 import Simulation.Aivika.Lattice
 import Simulation.Aivika.Experiment.Histogram
 
+-- the lattice size
+n = 50
+
 -- the up and down factors
-u = 1.2
-d = 0.85
+u0 = 1.2
+d0 = 0.85
+
+-- corrected factors for the lattice size
+u = exp (log u0 / (fromIntegral n / 2))
+d = exp (log d0 / (fromIntegral n / 2))
 
 -- initial stock price
 s0 = 100.0
@@ -28,11 +35,8 @@ strikePrice = 110.0
 -- risk free rate
 r = 0.05
 
--- the lattice size (defines the time of execution)
-n = 6
-
 specs = Specs { spcStartTime = 0.0,
-                spcStopTime = fromIntegral n * 0.5,
+                spcStopTime = 1.0,
                 spcDT = 0.1,
                 spcMethod = RungeKutta4,
                 spcGeneratorType = SimpleGenerator }
